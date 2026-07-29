@@ -25,7 +25,11 @@ from core.print import print_warning
 from .token import get as get_token,set_token
 import logging
 # 配置日志
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
 logger = logging.getLogger(__name__)
 
 
@@ -539,9 +543,15 @@ class WeChatAPI:
         return False
 
     def _start_heartbeat(self):
-        """登录成功后启动心跳保活，每15分钟请求一次非敏感接口"""
+        """登录成功后启动心跳保活，默认每30分钟请求一次非敏感接口（可用 server.heartbeat_interval 配置）"""
         self._stop_heartbeat()
-        heartbeat_interval = 900  # 15分钟
+        # 心跳间隔：默认 1800 秒（30 分钟）；可用 config.yaml 的 server.heartbeat_interval
+        # 或环境变量 HEARTBEAT_INTERVAL 覆盖。过频的心跳容易触发微信限流（freq control）
+        try:
+            from core.config import cfg as _hb_cfg
+            heartbeat_interval = int(_hb_cfg.get("server.heartbeat_interval", 1800))
+        except Exception:
+            heartbeat_interval = 1800  # 30分钟
 
         def heartbeat():
             if not self.is_logged_in:
@@ -624,7 +634,7 @@ class WeChatAPI:
 
             response.raise_for_status()
             self.cookies = requests.utils.dict_from_cookiejar(self.session.cookies) if self.session.cookies else {}
-            print(self.cookies)
+            logger.debug(f"已提取登录 Cookies（共 {len(self.cookies)} 项）")
             # 从URL或页面内容中提取token
             import re
             token_match = re.search(r'token=([^&\s"\']+)', response.text)
@@ -726,7 +736,7 @@ class WeChatAPI:
             biz_list=account_list['biz_list']['list']
             first_biz_item = biz_list[0] if len(biz_list) > 0 else None
 
-            print(first_biz_item)
+            logger.debug(f"当前登录公众号: {first_biz_item.get('nickname') or first_biz_item.get('username', '')}")
             # 解析账号信息（需要根据实际页面结构调整）
             account_info = {
                 'wx_app_name': first_biz_item.get('username',''),
@@ -808,16 +818,16 @@ class WeChatAPI:
             
             # 解析JSON响应
             data = response.json()
-            print("切换账号响应:", data)
+            logger.debug(f"切换账号响应: {data}")
             if data.get("base_resp").get("ret") == 0:
                 self._redirect()
             return data
             
         except requests.exceptions.RequestException as e:
-            print(f"请求出错: {e}")
+            logger.error(f"切换账号请求出错: {e}")
             return None
         except json.JSONDecodeError as e:
-            print(f"JSON解析出错: {e}")
+            logger.error(f"切换账号响应 JSON 解析出错: {e}")
         return None
     def _redirect(self):
         url=f"https://mp.weixin.qq.com/cgi-bin/loginpage?url=/cgi-bin/home?t=home/index&lang=zh_CN&token={self.token}"
@@ -1010,7 +1020,7 @@ class WeChatAPI:
         self.thread = ThreadManager(target=self.get_qr_code,args=(CallBack,Notice))  # 传入函数名
         self.thread.start()  # 启动线程
         from core.ver import VERSION
-        print(f"微信公众平台登录 v{VERSION}")
+        logger.info(f"微信公众平台登录 v{VERSION}")
         return {
             "code":f"/{self.wx_login_url}?t={(time.time())}",
             "is_exists":self.GetHasCode(),

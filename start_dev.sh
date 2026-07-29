@@ -477,7 +477,9 @@ start_backend() {
     fi
 
     # 设置开发环境变量
-    export DEBUG=True
+    # 注意：DEBUG=True 会触发高频任务等调试行为（如微信续期每分钟一次），
+    # 极易触发微信平台限流(freq control)，生产/日常采集请勿开启
+    export DEBUG=False
     export AUTO_RELOAD=True
     export LOG_LEVEL=DEBUG
     export ENABLE_JOB=True
