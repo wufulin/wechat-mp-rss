@@ -2,7 +2,7 @@
 # BuildKit：DOCKER_BUILDKIT=1 docker compose build（或默认已开启）以使用 RUN --mount=type=cache
 
 # 多阶段构建：第一阶段 - 前端构建
-FROM --platform=$BUILDPLATFORM node:20.18.0-slim AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:24.8.0-slim AS frontend-builder
 
 # 设置工作目录
 WORKDIR /app
