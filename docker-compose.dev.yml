@@ -23,6 +23,11 @@ services:
       - ./data/minio-data-dev:/data
 
   werss:
+    build:
+      context: .
+      dockerfile: Dockerfile.cn
+      args:
+        - BROWSER_TYPE=${BROWSER_TYPE:-firefox}
     container_name: werss-dev
     ports:
       - "${WERSS_PUBLISH_PORT:-8001}:8001"

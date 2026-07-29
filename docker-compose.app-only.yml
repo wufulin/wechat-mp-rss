@@ -4,7 +4,7 @@
 #
 # 基本用法（独立部署，先创建默认网络）：
 #   docker network create werss_app 2>/dev/null || true
-#   docker compose -f docker-compose.app-only.yml up -d --build
+#   docker compose -f docker-compose.app-only.yml up -d
 #
 # 加入已有 Docker 网络（如 Postgres 或 Traefik 所在网络）：
 #   WERSS_EXTERNAL_NETWORK=your_network_name docker compose -f docker-compose.app-only.yml up -d
@@ -17,15 +17,12 @@
 
 services:
   werss:
-    build:
-      context: .
-      dockerfile: Dockerfile.cn
-      args:
-        - BROWSER_TYPE=${BROWSER_TYPE:-firefox}
+    image: ${WERSS_IMAGE:-docker.io/franklin888/werss}:${WERSS_IMAGE_TAG:-latest}
     container_name: ${WERSS_CONTAINER_NAME:-werss}
     restart: unless-stopped
     env_file:
-      - .env
+      - path: .env
+        required: false
     volumes:
       - ${WERSS_DATA_DIR:-./data/werss-data}:/app/data
       - ${WERSS_LOGS_DIR:-./logs}:/app/logs

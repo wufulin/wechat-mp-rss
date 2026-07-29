@@ -8,6 +8,17 @@ on:
     branches:
       - main
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref to verify
+        required: false
+        type: string
+      skip_docker_build:
+        description: Skip the CI image build when the caller builds the release image next
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -24,6 +35,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v9.0.0
@@ -46,6 +59,16 @@ jobs:
       - name: Check development startup script
         run: bash -n start_dev.sh
 
+      - name: Check release and deployment scripts
+        run: |
+          python scripts/check-release-version.py
+          bash -n scripts/deploy-production.sh
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose --env-file .env.example -f docker-compose.yml config --quiet
+          docker compose --env-file .env.example -f docker-compose.app-only.yml config --quiet
+
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest
@@ -53,6 +76,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -85,6 +110,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -106,3 +133,28 @@ jobs:
         env:
           VITE_BASE_PATH: /werss/
         run: npm run build
+
+  docker:
+    name: Docker image build
+    if: ${{ !inputs.skip_docker_build }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build amd64 image without publishing
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          tags: werss:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

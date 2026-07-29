@@ -1,0 +1,238 @@
+name: Release Docker image and deploy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Resolve and validate release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      commit_sha: ${{ steps.source.outputs.commit_sha }}
+      git_ref: ${{ steps.release.outputs.git_ref }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Resolve release version
+        id: release
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          candidate="$REF_NAME"
+          candidate="${candidate#v}"
+          if [[ ! "$candidate" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release version must match X.Y.Z: $candidate" >&2
+            exit 1
+          fi
+          {
+            echo "version=$candidate"
+            echo "tag=v$candidate"
+            echo "git_ref=refs/tags/v$candidate"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.release.outputs.git_ref }}
+
+      - name: Record release commit
+        id: source
+        run: echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Validate source versions
+        run: python scripts/check-release-version.py "${{ steps.release.outputs.version }}"
+
+  quality:
+    name: Verify release source
+    needs: version
+    uses: ./.github/workflows/pr-checks.yaml
+    with:
+      ref: ${{ needs.version.outputs.git_ref }}
+      skip_docker_build: true
+
+  build:
+    name: Build and publish Docker image
+    needs:
+      - version
+      - quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.git_ref }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          scope: ${{ vars.DOCKERHUB_USERNAME }}/werss@push
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: docker.io/${{ vars.DOCKERHUB_USERNAME }}/werss
+          flavor: latest=false
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.version.outputs.tag }}
+            type=semver,pattern={{major}},value=${{ needs.version.outputs.tag }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=WeRSS
+            org.opencontainers.image.description=WeRSS 微信公众号 RSS 与内容管理服务
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.commit_sha }}
+
+      - name: Build and push multi-platform image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Confirm the release image is publicly pullable
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 10 --retry-delay 3 --retry-all-errors \
+            "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/werss/tags/$VERSION" \
+            >/dev/null
+
+      - name: Record image result
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          {
+            echo "### Docker image"
+            echo
+            echo "- Image: \`docker.io/${{ vars.DOCKERHUB_USERNAME }}/werss:$VERSION\`"
+            echo "- Digest: \`$DIGEST\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to GCP
+    needs:
+      - version
+      - build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    env:
+      GCP_HOST: ${{ vars.GCP_HOST }}
+      GCP_PORT: ${{ vars.GCP_PORT || '22' }}
+      GCP_USER: ${{ vars.GCP_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.GCP_KNOWN_HOSTS }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.git_ref }}
+
+      - name: Validate deployment configuration
+        run: |
+          [[ -n "$GCP_HOST" ]] || { echo "GCP_HOST is not configured" >&2; exit 1; }
+          [[ "$GCP_PORT" =~ ^[0-9]{1,5}$ ]] || { echo "GCP_PORT is invalid" >&2; exit 1; }
+          [[ "$GCP_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || { echo "GCP_USER is invalid" >&2; exit 1; }
+          [[ -n "$SSH_PRIVATE_KEY" ]] || { echo "GCP_SSH_PRIVATE_KEY is not configured" >&2; exit 1; }
+          [[ -n "$SSH_KNOWN_HOSTS" ]] || { echo "GCP_KNOWN_HOSTS is not configured" >&2; exit 1; }
+
+      - name: Configure SSH
+        run: |
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/werss-deploy"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+
+      - name: Stage and deploy release
+        run: |
+          remote="$GCP_USER@$GCP_HOST"
+          ssh_options=(
+            -i "$HOME/.ssh/werss-deploy"
+            -p "$GCP_PORT"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+          scp_options=(
+            -i "$HOME/.ssh/werss-deploy"
+            -P "$GCP_PORT"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+          ssh "${ssh_options[@]}" "$remote" \
+            "install -d -m 0750 /opt/werss/.incoming"
+          scp "${scp_options[@]}" docker-compose.yml \
+            "$remote:/opt/werss/.incoming/docker-compose-$VERSION.yml"
+          scp "${scp_options[@]}" scripts/deploy-production.sh \
+            "$remote:/opt/werss/.incoming/deploy-production-$VERSION.sh"
+          ssh "${ssh_options[@]}" "$remote" \
+            "DEPLOY_DIR=/opt/werss bash /opt/werss/.incoming/deploy-production-$VERSION.sh '$VERSION' '/opt/werss/.incoming/docker-compose-$VERSION.yml'"
+
+      - name: Record deployment result
+        env:
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          {
+            echo "### Production deployment"
+            echo
+            echo "- Version: \`$VERSION\`"
+            echo "- Image digest: \`$DIGEST\`"
+            echo "- Target: GCP / \`/opt/werss\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  github-release:
+    name: Publish GitHub release
+    needs:
+      - version
+      - deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.version.outputs.tag }}
+    steps:
+      - name: Create release notes
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "GitHub release $TAG already exists."
+          else
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --generate-notes \
+              --title "$TAG"
+          fi
