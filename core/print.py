@@ -1,24 +1,41 @@
 import sys
 import os
+import logging
 from colorama import init, Fore, Back, Style
 # 确保在Linux下也能正确初始化colorama
 if os.name == 'posix':
     os.environ['TERM'] = 'xterm-256color'  # 设置终端类型为支持颜色的终端
 init()  # 初始化colorama，确保跨平台支持ANSI颜色
+
+# 独立 logger：带时间戳、不向 root 传播（避免与 root 的 handler 重复输出）。
+# 注意：本模块被 core.config 引用，不能 import core.log（循环依赖），因此自建 handler。
+_logger = logging.getLogger("core.print")
+_logger.propagate = False
+if not _logger.handlers:
+    _handler = logging.StreamHandler(stream=sys.stdout)
+    _handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    ))
+    _logger.addHandler(_handler)
+_logger.setLevel(logging.INFO)
+
 class ColorPrinter:
-    """带颜色输出的打印工具类"""
+    """带颜色输出的打印工具类（经 logging 输出，自动带时间戳）"""
     
     def __init__(self):
         self._fore_color = ''
         self._back_color = ''
         self._style = ''
         self._text = ''
+        self._level = logging.INFO
     
     def _reset(self):
         """重置颜色和样式"""
         self._fore_color = ''
         self._back_color = ''
         self._style = ''
+        self._level = logging.INFO
         return self
     
     def red(self):
@@ -87,9 +104,9 @@ class ColorPrinter:
         return self
     
     def print(self, text, end='\n', file=sys.stdout):
-        """打印带格式的文本"""
+        """打印带格式的文本（经 logging 输出，自动带时间戳；end/file 参数保留兼容但不再生效）"""
         formatted = f"{self._style}{self._back_color}{self._fore_color}{text}{Style.RESET_ALL}"
-        print(formatted, end=end, file=file)
+        _logger.log(self._level, formatted)
         self._reset()
         return self
     
@@ -120,10 +137,12 @@ class ColorPrinter:
 
     def print_error(self, text, **kwargs):
         """快捷打印错误信息(红色粗体)"""
+        self._level = logging.ERROR
         self.red().bold().print(text, **kwargs)
     
     def print_warning(self, text, **kwargs):
         """快捷打印警告信息(黄色粗体)"""
+        self._level = logging.WARNING
         self.yellow().bold().print(text, **kwargs)
     
     def print_success(self, text, **kwargs):

@@ -1,5 +1,6 @@
 import requests
 import json
+from core.log import logger
 
 def send_feishu_message(webhook_url, title, text):
     """
@@ -10,24 +11,24 @@ def send_feishu_message(webhook_url, title, text):
     - title: 消息标题
     - text: 消息内容（支持 Markdown 格式）
     """
-    print(f'【飞书消息】开始发送消息，webhook_url: {webhook_url[:50]}...', flush=True)
-    print(f'【飞书消息】title: {title}', flush=True)
-    print(f'【飞书消息】text长度: {len(text) if text else 0} 字符', flush=True)
+    logger.info(f'【飞书消息】开始发送消息，webhook_url: {webhook_url[:50]}...')
+    logger.info(f'【飞书消息】title: {title}')
+    logger.info(f'【飞书消息】text长度: {len(text) if text else 0} 字符')
     
     # 首先尝试使用富文本 post 格式（支持 Markdown 渲染）
-    print('【飞书消息】尝试发送 post 格式消息...', flush=True)
+    logger.info('【飞书消息】尝试发送 post 格式消息...')
     success = send_feishu_post_message(webhook_url, title, text)
     if success:
-        print('【飞书消息】post 格式消息发送成功', flush=True)
+        logger.info('【飞书消息】post 格式消息发送成功')
         return True
     
     # 如果失败，降级使用文本格式
-    print('【飞书消息】post 格式失败，降级使用 text 格式...', flush=True)
+    logger.info('【飞书消息】post 格式失败，降级使用 text 格式...')
     result = send_feishu_text_message(webhook_url, title, text)
     if result:
-        print('【飞书消息】text 格式消息发送成功', flush=True)
+        logger.info('【飞书消息】text 格式消息发送成功')
     else:
-        print('【飞书消息】text 格式消息也发送失败', flush=True)
+        logger.warning('【飞书消息】text 格式消息也发送失败')
     return result
 
 
@@ -218,11 +219,8 @@ def send_feishu_post_message(webhook_url, title, text):
     output += json.dumps(data, ensure_ascii=False, indent=2) + '\n'
     output += '=' * 80 + '\n'
     
-    # 使用 print 输出到标准输出并强制刷新
-    print(output, flush=True)
-    # 使用 logger 输出到日志
-    from core.log import logger
-    logger.info(output)
+    # 输出到日志
+    logger.debug(output)
     
     try:
         response = requests.post(
@@ -235,29 +233,27 @@ def send_feishu_post_message(webhook_url, title, text):
         result = response.json()
         
         # 打印完整响应以便调试
-        print(f'【飞书API响应】{json.dumps(result, ensure_ascii=False, indent=2)}', flush=True)
+        logger.debug(f'【飞书API响应】{json.dumps(result, ensure_ascii=False, indent=2)}')
         
         # 检查飞书返回的错误码
         if result.get('code') != 0:
             error_msg = result.get('msg', '未知错误')
-            print(f'【飞书错误】富文本消息发送失败: {error_msg} (code: {result.get("code")})', flush=True)
+            logger.error(f'【飞书错误】富文本消息发送失败: {error_msg} (code: {result.get("code")})')
             return False
         else:
-            print('【飞书成功】富文本消息发送成功', flush=True)
+            logger.info('【飞书成功】富文本消息发送成功')
             return True
     except requests.exceptions.RequestException as e:
-        print(f'【飞书错误】富文本消息发送失败 (网络错误): {e}', flush=True)
+        logger.error(f'【飞书错误】富文本消息发送失败 (网络错误): {e}')
         if hasattr(e, 'response') and e.response is not None:
             try:
                 error_detail = e.response.json()
-                print(f'【飞书错误详情】{json.dumps(error_detail, ensure_ascii=False, indent=2)}', flush=True)
+                logger.error(f'【飞书错误详情】{json.dumps(error_detail, ensure_ascii=False, indent=2)}')
             except:
-                print(f'【飞书错误响应】{e.response.text}', flush=True)
+                logger.error(f'【飞书错误响应】{e.response.text}')
         return False
     except Exception as e:
-        print(f'【飞书错误】富文本消息发送失败: {e}', flush=True)
-        import traceback
-        traceback.print_exc()
+        logger.exception(f'【飞书错误】富文本消息发送失败: {e}')
         return False
 
 
@@ -362,7 +358,7 @@ def send_feishu_text_message(webhook_url, title, text):
     }
     
     # 打印发送的数据以便调试
-    print(f'【飞书文本消息】发送数据: msg_type={data["msg_type"]}, text长度={len(data["content"]["text"])}', flush=True)
+    logger.debug(f'【飞书文本消息】发送数据: msg_type={data["msg_type"]}, text长度={len(data["content"]["text"])}')
     
     try:
         response = requests.post(
@@ -375,26 +371,24 @@ def send_feishu_text_message(webhook_url, title, text):
         result = response.json()
         
         # 打印完整响应以便调试
-        print(f'【飞书API响应】{json.dumps(result, ensure_ascii=False, indent=2)}', flush=True)
+        logger.debug(f'【飞书API响应】{json.dumps(result, ensure_ascii=False, indent=2)}')
         
         if result.get('code') != 0:
             error_msg = result.get('msg', '未知错误')
-            print(f'【飞书错误】文本消息发送失败: {error_msg} (code: {result.get("code")})', flush=True)
+            logger.error(f'【飞书错误】文本消息发送失败: {error_msg} (code: {result.get("code")})')
             return False
         else:
-            print('【飞书成功】文本消息发送成功', flush=True)
+            logger.info('【飞书成功】文本消息发送成功')
             return True
     except requests.exceptions.RequestException as e:
-        print(f'【飞书错误】文本消息发送失败 (网络错误): {e}', flush=True)
+        logger.error(f'【飞书错误】文本消息发送失败 (网络错误): {e}')
         if hasattr(e, 'response') and e.response is not None:
             try:
                 error_detail = e.response.json()
-                print(f'【飞书错误详情】{json.dumps(error_detail, ensure_ascii=False, indent=2)}', flush=True)
+                logger.error(f'【飞书错误详情】{json.dumps(error_detail, ensure_ascii=False, indent=2)}')
             except:
-                print(f'【飞书错误响应】{e.response.text}', flush=True)
+                logger.error(f'【飞书错误响应】{e.response.text}')
         return False
     except Exception as e:
-        print(f'【飞书错误】文本消息发送失败: {e}', flush=True)
-        import traceback
-        traceback.print_exc()
+        logger.exception(f'【飞书错误】文本消息发送失败: {e}')
         return False
