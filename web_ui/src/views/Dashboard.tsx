@@ -641,6 +641,7 @@ const Dashboard: React.FC = () => {
     stats: { totalArticles: 0, totalSources: 0, todayArticles: 0, weekArticles: 0 },
     sourceStats: [], keywordStats: [], trendData: [], keywordTrendData: []
   }
+  const positiveSourceStats = sourceStats.filter(item => item.article_count > 0)
 
   // 从元数据中获取 topKeywords，如果没有则使用全局统计的前10个作为备选
   const meta = dashboardData?._meta
@@ -701,9 +702,9 @@ const Dashboard: React.FC = () => {
             <CardTitle className="text-base font-semibold">{t('dashboard.charts.sourceDistribution')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {sourceStats.length > 0 ? (
+            {positiveSourceStats.length > 0 ? (
               <Suspense fallback={<div className="flex justify-center items-center h-[320px]"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
-                <VChart spec={getSourceChartSpec(sourceStats)} style={{ height: '320px' }} />
+                <VChart spec={getSourceChartSpec(positiveSourceStats)} style={{ height: '320px' }} />
               </Suspense>
             ) : (
               <div className="flex justify-center items-center h-[320px] text-muted-foreground">{t('dashboard.charts.noData')}</div>

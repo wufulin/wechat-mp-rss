@@ -11,7 +11,7 @@ const SETTINGS_KEY = 'app_settings'
 
 // 默认设置
 const defaultSettings: AppSettings = {
-  watermarkEnabled: true,
+  watermarkEnabled: false,
   darkMode: false
 }
 
@@ -60,4 +60,3 @@ export const initSettings = (): void => {
     /* ignore */
   }
 }
-
