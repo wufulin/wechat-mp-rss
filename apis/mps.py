@@ -17,8 +17,15 @@ from core.config import cfg
 from core.res import save_avatar_locally
 import io
 import os
+import asyncio
 from jobs.article import UpdateArticle
-from driver.wxarticle import WXArticleFetcher
+from driver.wechat_article_meta import (
+    InvalidWeChatArticleUrl,
+    WeChatArticleFetchError,
+    WeChatArticleMetadataError,
+    fetch_wechat_article_metadata,
+    validate_wechat_article_url,
+)
 from sqlalchemy import func, case
 from core.models.article import Article, ArticleBase, DATA_STATUS
 router = APIRouter(prefix=f"/mps", tags=["公众号管理"])
@@ -268,26 +275,47 @@ async def get_mp_by_article(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        info =await WXArticleFetcher().async_get_article_content(url)
-        
-        if not info:
-            raise HTTPException(
-                status_code=status.HTTP_201_CREATED,
-                detail=error_response(
-                    code=40401,
-                    message="公众号不存在"
-                )
-            )
+        normalized_url = validate_wechat_article_url(url)
+        info = await asyncio.to_thread(
+            fetch_wechat_article_metadata,
+            normalized_url,
+        )
         return success_response(info)
-    except Exception as e:
-        print(f"获取公众号详情错误: {str(e)}")
+    except InvalidWeChatArticleUrl as e:
         raise HTTPException(
-            status_code=status.HTTP_201_CREATED,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=error_response(
+                code=40001,
+                message=str(e),
+            ),
+        ) from e
+    except WeChatArticleMetadataError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=error_response(
+                code=42201,
+                message=str(e),
+            ),
+        ) from e
+    except WeChatArticleFetchError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=error_response(
+                code=50201,
+                message=str(e),
+            ),
+        ) from e
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("通过文章链接获取公众号详情失败")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(
                 code=50001,
-                message="请输入正确的公众号文章链接"
-            )
-        )
+                message="获取公众号信息失败，请稍后重试",
+            ),
+        ) from e
 
 @router.post("", summary="添加公众号")
 async def add_mp(
