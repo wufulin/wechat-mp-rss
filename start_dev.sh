@@ -85,6 +85,56 @@ open_frontend_dev_url() {
     fi
 }
 
+ensure_playwright_browser() {
+    local venv_dir="$1"
+    local browser_name="${BROWSER_TYPE:-firefox}"
+
+    case "$browser_name" in
+        firefox|chromium|webkit)
+            ;;
+        *)
+            echo -e "${RED}❌ BROWSER_TYPE 仅支持 firefox、chromium 或 webkit，当前值: ${browser_name}${NC}"
+            return 1
+            ;;
+    esac
+
+    export BROWSER_TYPE="$browser_name"
+
+    local browser_path
+    browser_path="$("$venv_dir/bin/python" - "$browser_name" <<'PYTHON_SCRIPT'
+import sys
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as playwright:
+    print(getattr(playwright, sys.argv[1]).executable_path)
+PYTHON_SCRIPT
+)"
+
+    if [ -x "$browser_path" ]; then
+        echo -e "${GREEN}✅ Playwright ${browser_name} 浏览器已安装${NC}"
+        return 0
+    fi
+
+    echo -e "${YELLOW}🌐 当前 Playwright 版本缺少 ${browser_name} 浏览器，正在安装...${NC}"
+    "$venv_dir/bin/python" -m playwright install "$browser_name"
+
+    browser_path="$("$venv_dir/bin/python" - "$browser_name" <<'PYTHON_SCRIPT'
+import sys
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as playwright:
+    print(getattr(playwright, sys.argv[1]).executable_path)
+PYTHON_SCRIPT
+)"
+
+    if [ ! -x "$browser_path" ]; then
+        echo -e "${RED}❌ Playwright ${browser_name} 浏览器安装后仍不可用${NC}"
+        return 1
+    fi
+
+    echo -e "${GREEN}✅ Playwright ${browser_name} 浏览器安装完成${NC}"
+}
+
 # 清理函数
 cleanup() {
     echo ""
@@ -325,7 +375,7 @@ start_backend() {
     else
         echo -e "${GREEN}✅ Python 依赖已安装${NC}"
     fi
-    
+
     # 检查配置文件
     if [ ! -f "config.yaml" ]; then
         echo -e "${YELLOW}📝 创建配置文件...${NC}"
@@ -347,6 +397,8 @@ start_backend() {
         done < <(grep -v '^\s*#' .env | grep -v '^\s*$')
         echo -e "${GREEN}✅ 环境变量已加载${NC}"
     fi
+
+    ensure_playwright_browser "$VENV_DIR"
 
     # 如果 .env 中已配置 DB，直接使用
     if [ -n "$DB" ]; then
@@ -616,4 +668,6 @@ main() {
 }
 
 # 运行主流程
-main
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main
+fi

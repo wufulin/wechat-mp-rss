@@ -657,7 +657,6 @@ class WXArticleFetcher:
                     if images and len(images)>0:
                         info["pic_url"]=images[0]
             except Exception as e:
-                from core.print import print_warning
                 print_warning(f"处理封面图片失败: {e}")
                 # 失败时使用原始图片
                 if images and len(images)>0:
