@@ -1,7 +1,10 @@
 from typing import List, Optional
 import requests
+import logging
 
 from .base import EmbeddingProvider
+
+logger = logging.getLogger(__name__)
 
 
 class BigModelEmbeddingProvider(EmbeddingProvider):
@@ -47,8 +50,7 @@ class BigModelEmbeddingProvider(EmbeddingProvider):
             data = response.json().get("data", [])
             return [item["embedding"] for item in data]
         except requests.exceptions.HTTPError as e:
-            print(f"BigModel API Error: {e}")
-            print(f"Request payload: {payload}")
-            print(f"Response status: {e.response.status_code}")
-            print(f"Response body: {e.response.text}")
+            logger.error(f"BigModel API Error: {e} (status: {e.response.status_code})")
+            logger.debug(f"Request payload: {payload}")
+            logger.debug(f"Response body: {e.response.text}")
             raise

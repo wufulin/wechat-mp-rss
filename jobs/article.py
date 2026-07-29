@@ -3,6 +3,7 @@ import core.wx as wx
 import core.db as db
 from core.config import DEBUG,cfg
 from core.models.article import Article
+from core.log import logger
 
 DB=db.Db(tag="文章采集API")
 
@@ -16,5 +17,5 @@ def UpdateArticle(art:dict,check_exist=False):
         return True
     return False
 def Update_Over(data=None):
-    print("更新完成")
+    logger.info("更新完成")
     pass

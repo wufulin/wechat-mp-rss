@@ -1,5 +1,7 @@
 import threading
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 class ThreadManager(threading.Thread):
     """多线程管理类，支持启动、停止和强制停止操作"""
@@ -40,9 +42,9 @@ class ThreadManager(threading.Thread):
             if self._target:
                 self._target(*self._args, **self._kwargs)
         except Exception as e:
-            print(f"线程 {self.name} 发生异常: {e}")
+            logger.error(f"线程 {self.name} 发生异常: {e}")
         finally:
-            print(f"线程 {self.name} 已停止")
+            logger.debug(f"线程 {self.name} 已停止")
 
 # 示例用法
 if __name__ == "__main__":

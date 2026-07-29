@@ -3,7 +3,8 @@ from core.config import Config,cfg
 # 确保data目录和wx.lic文件存在
 import os
 
-from core.print import print_success
+import logging
+logger = logging.getLogger(__name__)
 lic_path="./data/wx.lic"
 os.makedirs(os.path.dirname(lic_path), exist_ok=True)
 if not os.path.exists(lic_path):
@@ -23,7 +24,7 @@ def set_token(data:any,ext_data:any=None):
     wx_cfg.set("cookie", data.get("cookies_str", ""))
     wx_cfg.set("fingerprint", data.get("fingerprint", ""))
     wx_cfg.set("expiry", data.get("expiry", {}))
-    print_success(f"Token:{data.get('token')} \n到期时间:{data.get('expiry')['expiry_time']}\n")
+    logger.info(f"Token 已更新 ({str(data.get('token'))[:8]}...)，到期时间: {data.get('expiry')['expiry_time']}")
     if ext_data is not None:
         wx_cfg.set("ext_data", ext_data)
     wx_cfg.save_config()

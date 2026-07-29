@@ -10,6 +10,8 @@ from core.print import print_warning,print_info,print_error,print_success
 import logging
 import os
 
+logger = logging.getLogger(__name__)
+
 # SQLAlchemy 日志级别将在 init 方法中根据配置文件的 debug 设置来动态配置
 
 # 声明基类
@@ -108,7 +110,7 @@ class Db:
                 except Exception as create_error:
                     print_error(f"创建表也失败: {create_error}")
         except Exception as e:
-            print(f"Error creating database connection: {e}")
+            logger.error(f"Error creating database connection: {e}")
             raise
     def create_tables(self):
         """Create all tables defined in models"""
@@ -520,7 +522,7 @@ class Db:
             data = query.limit(limit).offset(offset).all()
             return data
         except Exception as e:
-            print(f"Failed to fetch Articles: {e}")
+            logger.error(f"Failed to fetch Articles: {e}")
             return []    
              
     def get_all_mps(self) -> List[Feed]:
@@ -528,7 +530,7 @@ class Db:
         try:
             return self.get_session().query(Feed).all()
         except Exception as e:
-            print(f"Failed to fetch Feed: {e}")
+            logger.error(f"Failed to fetch Feed: {e}")
             return []
             
     def get_mps_list(self, mp_ids:str) -> List[Feed]:
@@ -537,14 +539,14 @@ class Db:
             data =  self.get_session().query(Feed).filter(Feed.id.in_(ids)).all()
             return data
         except Exception as e:
-            print(f"Failed to fetch Feed: {e}")
+            logger.error(f"Failed to fetch Feed: {e}")
             return []
     def get_mps(self, mp_id:str) -> Optional[Feed]:
         try:
             data =  self.get_session().query(Feed).filter_by(id= mp_id).first()
             return data
         except Exception as e:
-            print(f"Failed to fetch Feed: {e}")
+            logger.error(f"Failed to fetch Feed: {e}")
             return None
 
     def get_faker_id(self, mp_id:str):
@@ -559,20 +561,20 @@ class Db:
         # Session Events
         @event.listens_for(session, 'before_commit')
         def receive_before_commit(session):
-            print("Transaction is about to be committed.")
+            logger.debug("Transaction is about to be committed.")
 
         @event.listens_for(session, 'after_commit')
         def receive_after_commit(session):
-            print("Transaction has been committed.")
+            logger.debug("Transaction has been committed.")
 
         # Connection Events
         @event.listens_for(self.engine, 'connect')
         def connect(dbapi_connection, connection_record):
-            print("New database connection established.")
+            logger.debug("New database connection established.")
 
         @event.listens_for(self.engine, 'close')
         def close(dbapi_connection, connection_record):
-            print("Database connection closed.")
+            logger.debug("Database connection closed.")
     def get_session(self):
         """获取新的数据库会话"""
         UseInThread=self.User_In_Thread
@@ -623,7 +625,7 @@ class Db:
     def auto_refresh(self):
         # 定义一个事件监听器，在对象更新后自动刷新
         def receive_after_update(mapper, connection, target):
-            print(f"Refreshing object: {target}")
+            logger.debug(f"Refreshing object: {target}")
         from core.models import MessageTask,Article
         event.listen(Article,'after_update', receive_after_update)
         event.listen(MessageTask,'after_update',receive_after_update)

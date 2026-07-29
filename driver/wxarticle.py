@@ -9,6 +9,8 @@ import re
 import os
 from datetime import datetime
 from core.config import cfg
+import logging
+logger = logging.getLogger(__name__)
 
 class WXArticleFetcher:
     """微信公众号文章获取器
@@ -718,7 +720,7 @@ class WXArticleFetcher:
         if hasattr(self, 'controller'):
             self.controller.Close()
         else:
-            print("WXArticleFetcher未初始化或已销毁")
+            logger.warning("WXArticleFetcher未初始化或已销毁")
     def __del__(self):
         """销毁文章获取器"""
         try:

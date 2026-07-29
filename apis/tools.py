@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any
 import os
 import threading
 import asyncio
+from core.log import logger
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -474,7 +475,7 @@ async def export_articles(
             zip_file_path = f"{docx_path}exported_articles_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
         
         # 调试：打印接收到的参数
-        print(f"导出请求参数 - mp_id: {request.mp_id}, export_mp_id: {export_mp_id}, doc_id: {request.doc_id}, doc_id类型: {type(request.doc_id)}")
+        logger.debug(f"导出请求参数 - mp_id: {request.mp_id}, export_mp_id: {export_mp_id}, doc_id: {request.doc_id}, doc_id类型: {type(request.doc_id)}")
         
         # 启动后台线程执行导出操作
         export_thread = threading.Thread(

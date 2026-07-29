@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 # from core.config import cfg
 from .cfg import wx_cfg,cfg
 import core.db as db
+from core.log import logger
 
 def dateformat(timestamp:any):
     # UTC时间对象
@@ -51,7 +52,7 @@ def search_Biz(kw:str="",limit=5,offset=0):
         
         data['publish_page']=json.loads(data['publish_page'])
     except Exception as e:
-        print(f"请求失败: {e}")
+        logger.error(f"请求失败: {e}")
     return data
 
 from bs4 import BeautifulSoup
@@ -83,7 +84,7 @@ def content_extract(url):
                 img_tag['style'] = style
         return js_content_div.prettify()
     else:
-        print("download error,status_code: ",r.status_code,"\n")
+        logger.error(f"download error,status_code: {r.status_code}")
     return ""
 #通过公众号接口获取公众号文章列表
 def get_Articles(faker_id:str):
@@ -116,7 +117,7 @@ def get_Articles(faker_id:str):
         data['publish_page']=json.loads(data['publish_page'])
         data['publish_info']=json.loads(data['publish_info'])
     except Exception as e:
-        print(f"请求失败: {e}",data)
+        logger.error(f"请求失败: {e} {data}")
     return data
 #通过公众号文章链接获取公众号id
 def get_id(url:str)->str:
@@ -124,9 +125,9 @@ def get_id(url:str)->str:
     match = re.search(pattern, url)
     if match:
         article_id = match.group(1)
-        print(f"提取结果：{article_id}")  # 输出：5iq10fsH-5ZA9D1Uv4ciqQ
+        logger.debug(f"提取结果：{article_id}")
     else:
-        print("未匹配到有效内容")
+        logger.debug("未匹配到有效内容")
     return article_id
 
 
@@ -150,7 +151,7 @@ def get_list(faker_id:str=None,mp_id:str=None,is_add:bool=False):
             art=art['appmsgex']
             art=art[0]
             #    print(art,type(art),sep='\n\n')
-            print(art['title'],art['cover'],art['link'],art['update_time'],art['create_time'],sep='\n',end='\n\n\n')
+            logger.debug(f"{art['title']}\n{art['cover']}\n{art['link']}\n{art['update_time']}\n{art['create_time']}")
             article={           
             'id':get_id(art['link']),
             'mp_id':mp_id,
@@ -165,9 +166,9 @@ def get_list(faker_id:str=None,mp_id:str=None,is_add:bool=False):
             articles.append(article)
             if is_add:
                 isOk=wx_db.add_article(article)
-                print(f'添加成功{isOk}')
+                logger.debug(f'添加成功{isOk}')
     except Exception as e:
-        print(e,"出错了")
+        logger.error(f"出错了: {e}")
    
    
     return articles
@@ -208,16 +209,16 @@ def update_mps(mp_id:str, mp:Feed):
             feed = session.query(Feed).filter(Feed.id == mp_id).first()
             if feed:
                 for key, value in update_data.items():
-                    print(f"更新公众号{mp_id}的{key}为{value}")
+                    logger.debug(f"更新公众号{mp_id}的{key}为{value}")
                     setattr(feed, key, value)
                 session.commit()
             else:
-                print(f"未找到ID为{mp_id}的公众号记录")
+                logger.warning(f"未找到ID为{mp_id}的公众号记录")
         finally:
            pass
             
     except Exception as e:
-        print(f"更新公众号状态失败: {e}")
+        logger.error(f"更新公众号状态失败: {e}")
         raise
 # if __name__ == "__main__":
 #   data=get_list()

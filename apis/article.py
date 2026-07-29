@@ -126,7 +126,7 @@ async def clean_orphan_articles(
         })
     except Exception as e:
         session.rollback()
-        print(f"清理无效文章错误: {str(e)}")
+        logger.error(f"清理无效文章错误: {str(e)}")
         raise HTTPException(
             status_code=fast_status.HTTP_201_CREATED,
             detail=error_response(
@@ -149,7 +149,7 @@ async def clean_duplicate(
             "deleted_count": deleted_count
         })
     except Exception as e:
-        print(f"清理重复文章: {str(e)}")
+        logger.error(f"清理重复文章: {str(e)}")
         raise HTTPException(
             status_code=fast_status.HTTP_201_CREATED,
             detail=error_response(

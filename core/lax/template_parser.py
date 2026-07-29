@@ -1,5 +1,7 @@
 import re
 from typing import Any, Dict, List, Union
+import logging
+logger = logging.getLogger(__name__)
 # """
 # 模板引擎使用示例
 
@@ -397,9 +399,9 @@ class TemplateParser:
                                  if not k.startswith('__') and k not in self.custom_functions}
                 
                 # Debug output
-                print(f"DEBUG - Condition evaluation result: {result}")
-                print(f"DEBUG - Local vars after execution: {local_vars.keys()}")
-                print(f"DEBUG - Updated context to return: {updated_context.keys()}")
+                logger.debug(f"Condition evaluation result: {result}")
+                logger.debug(f"Local vars after execution: {local_vars.keys()}")
+                logger.debug(f"Updated context to return: {updated_context.keys()}")
                 
                 # Ensure all calculated variables are included
                 for k, v in local_vars.items():
@@ -552,7 +554,7 @@ class TemplateParser:
         except Exception as e:
             # Debug: print error for nested access
             if '.' in iterable:
-                print(f"DEBUG - Failed to get iterable '{iterable}': {e}")
+                logger.debug(f"Failed to get iterable '{iterable}': {e}")
             return []
             
     def _render_parts(self, parts: List[Union[str, None]], context: Dict[str, Any]) -> str:

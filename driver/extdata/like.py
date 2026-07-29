@@ -1,6 +1,8 @@
 from mitmproxy import http, options
 from mitmproxy.tools.dump import DumpMaster
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 class RequestHandler:
     def __init__(self):
@@ -17,7 +19,7 @@ class RequestHandler:
                 if "read_num" in response_data:
                     article_url = flow.request.url
                     self.read_counts[article_url] = response_data["read_num"]
-                    print(f"文章阅读数: {response_data['read_num']}")
+                    logger.info(f"文章阅读数: {response_data['read_num']}")
             except json.JSONDecodeError:
                 pass
 
@@ -39,7 +41,7 @@ class RequestHandler:
         handler = RequestHandler()
         master = DumpMaster(opts,loop=asyncio.new_event_loop())
         master.addons.add(handler)
-        print("代理监听已启动，监听地址: 0.0.0.0:8080 (支持 HTTPS)")
+        logger.info("代理监听已启动，监听地址: 0.0.0.0:8080 (支持 HTTPS)")
         asyncio.run(master.run())
 
 if __name__ == "__main__":

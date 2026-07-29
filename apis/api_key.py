@@ -6,6 +6,7 @@ import secrets
 import uuid
 from core.auth import get_current_user
 from core.db import DB
+from core.log import logger
 from core.models.api_key import ApiKey, ApiKeyLog
 from core.models import User as DBUser
 from .base import success_response, error_response
@@ -130,8 +131,7 @@ async def create_api_key(
         }, message="API Key 创建成功，请妥善保存")
         import traceback
         error_trace = traceback.format_exc()
-        print(f"创建 API Key 错误: {str(e)}")
-        print(f"错误堆栈: {error_trace}")
+        logger.error(f"创建 API Key 错误: {str(e)}\n{error_trace}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(

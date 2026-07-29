@@ -47,7 +47,7 @@ def send_message(hook: MessageWebHook) -> str:
     }
     message = parser.render(data)
     # 这里可以添加发送消息的具体实现
-    print("发送消息:", message)
+    logger.info(f"发送消息: {message}")
     notice(hook.task.web_hook_url, hook.task.name, message)
     return message
 
