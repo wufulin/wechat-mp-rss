@@ -46,8 +46,7 @@ const ConfigDetail: React.FC = () => {
   const fetchConfig = async (configKey: string) => {
     try {
       setLoading(true)
-      const res = await getConfig(configKey)
-      const data = res.data || res
+      const data = await getConfig(configKey)
       setConfig(data)
       form.setValue('config_value', data.config_value)
       form.setValue('description', data.description || '')

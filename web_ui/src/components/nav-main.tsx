@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
   SidebarGroup,
@@ -18,8 +17,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { ChevronRight, type LucideIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-
 interface NavItem {
   title: string
   url: string

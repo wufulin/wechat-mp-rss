@@ -1,7 +1,8 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface StatisticProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StatisticProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title" | "prefix"> {
   title?: React.ReactNode
   value: React.ReactNode
   prefix?: React.ReactNode

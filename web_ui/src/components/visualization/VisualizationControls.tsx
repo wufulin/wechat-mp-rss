@@ -17,8 +17,6 @@ import {
 import {Switch} from '@/components/ui/switch'
 import {Settings, RefreshCw} from 'lucide-react'
 import type {VisualizationControlsProps, ReductionMethod, LayoutType} from '@/types/visualization'
-import {cn} from '@/lib/utils'
-
 export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
   config,
   onConfigChange,

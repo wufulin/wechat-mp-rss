@@ -25,7 +25,7 @@
 **功能：**
 - 使用 Python 3.12 与 `uv.lock` 同步后端依赖并运行 `unittest`
 - 检查后端 Python 文件可编译和 `start_dev.sh` Shell 语法
-- 使用 Node.js 24.8.0 与 pnpm 11.5.2 锁定安装前端依赖并执行生产构建
+- 使用 Node.js 24.8.0 与 pnpm 11.5.2 锁定安装前端依赖，执行 TypeScript 类型检查和生产构建
 - 校验文档路由、导航和链接，并构建文档站
 
 **触发条件：**

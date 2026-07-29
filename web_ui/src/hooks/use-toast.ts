@@ -35,9 +35,6 @@ function toast({ title, description, variant, ...props }: Toast) {
   return {
     id,
     dismiss: () => sonnerToast.dismiss(id),
-    update: (props: Toast) => {
-        // Sonner update logic if needed
-    }
   }
 }
 

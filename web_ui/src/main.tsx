@@ -22,7 +22,6 @@ ReactDOM.createRoot(document.getElementById('app')!).render(
         router={router}
         future={{
           v7_startTransition: true,
-          v7_relativeSplatPath: true,
         }}
         fallbackElement={
           <div className="flex items-center justify-center h-screen">

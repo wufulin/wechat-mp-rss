@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // 权限检查组件
 const PermissionRoute = ({ 
   children, 
-  permissions 
+  permissions: _permissions
 }: { 
   children: React.ReactNode
   permissions?: string[] 
@@ -302,7 +302,6 @@ const router = createBrowserRouter(
   ],
   {
     future: {
-      v7_startTransition: true,
       v7_relativeSplatPath: true,
     },
   }

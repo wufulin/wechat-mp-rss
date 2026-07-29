@@ -9,7 +9,8 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/compo
 import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {Loader2, Download, RefreshCw} from 'lucide-react'
-import type {VisualizationData, ScatterPlotProps, VisualizationNode} from '@/types/visualization'
+import type {ISpec} from '@visactor/vchart'
+import type {ScatterPlotProps, VisualizationNode} from '@/types/visualization'
 
 // 懒加载VChart组件
 const VChart = React.lazy(() =>
@@ -30,7 +31,6 @@ export const EmbeddingScatterPlot: React.FC<ScatterPlotProps> = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<any>(null)
-  const [hoveredNode, setHoveredNode] = useState<any>(null)
   const chartRef = useRef<any>(null)
 
   const extractNodeFromEvent = (event: any): VisualizationNode | null => {
@@ -39,14 +39,13 @@ export const EmbeddingScatterPlot: React.FC<ScatterPlotProps> = ({
   }
 
   // 生成VChart配置
-  const generateSpec = () => {
+  const generateSpec = (): ISpec | null => {
     if (!data?.nodes || data.nodes.length === 0) {
       return null
     }
 
     const isDark = theme === 'dark'
     const primaryColor = isDark ? '#60a5fa' : '#3b82f6'
-    const textColor = isDark ? '#e5e7eb' : '#374151'
     const gridColor = isDark ? '#374151' : '#e5e7eb'
 
     const plotData = data.nodes
@@ -74,10 +73,7 @@ export const EmbeddingScatterPlot: React.FC<ScatterPlotProps> = ({
       yField: '_y',
       seriesField: '_cluster',
       sizeField: '_size',
-      size: {
-        type: 'linear',
-        range: [8, 20]
-      },
+      size: [8, 20],
       point: {
         visible: true,
         style: {
@@ -162,12 +158,10 @@ export const EmbeddingScatterPlot: React.FC<ScatterPlotProps> = ({
   const handleChartHover = (datum: any) => {
     const nodeData = extractNodeFromEvent(datum)
     if (nodeData) {
-      setHoveredNode(nodeData)
       if (onNodeHover) {
         onNodeHover(nodeData)
       }
     } else {
-      setHoveredNode(null)
       if (onNodeHover) {
         onNodeHover(null)
       }

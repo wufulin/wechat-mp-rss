@@ -29,9 +29,9 @@ const MessageTaskList: React.FC = () => {
     total: 0
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [runDialogOpen, setRunDialogOpen] = useState(false)
-  const [runTargetId, setRunTargetId] = useState<number | null>(null)
+  const [runTargetId, setRunTargetId] = useState<string | null>(null)
   const [isTestRun, setIsTestRun] = useState(false)
   const { toast } = useToast()
 
@@ -154,11 +154,11 @@ const MessageTaskList: React.FC = () => {
     }
   }
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     navigate(`/message-tasks/edit/${id}`)
   }
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     setDeleteTargetId(id)
     setDeleteDialogOpen(true)
   }
@@ -183,7 +183,7 @@ const MessageTaskList: React.FC = () => {
     }
   }
 
-  const runTask = (id: number, isTest: boolean = false) => {
+  const runTask = (id: string, isTest: boolean = false) => {
     setRunTargetId(id)
     setIsTestRun(isTest)
     setRunDialogOpen(true)
@@ -296,7 +296,7 @@ const MessageTaskList: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  taskList.map((task: any) => (
+                  taskList.map((task) => (
                     <TableRow key={task.id}>
                       <TableCell className="font-medium truncate max-w-[200px]" title={task.name || task.message_template || ''}>
                         {task.name || task.message_template || '-'}

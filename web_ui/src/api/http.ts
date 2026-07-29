@@ -1,8 +1,8 @@
-import axios from 'axios'
+import axios, { type AxiosRequestConfig } from 'axios'
 import { getToken } from '@/utils/auth'
 import { Message } from '@/utils/message'
 // 创建axios实例
-const http = axios.create({
+const axiosInstance = axios.create({
   baseURL: (import.meta.env.VITE_API_BASE_URL || '') + 'api/v1/',
   timeout: 100000,
   headers: {
@@ -12,7 +12,7 @@ const http = axios.create({
 })
 
 // 请求拦截器
-http.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   config => {
     const token = getToken()
     if (token) {
@@ -26,7 +26,7 @@ http.interceptors.request.use(
 )
 
 // 响应拦截器
-http.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   response => {
     // 处理标准响应格式
     if (response.data?.code === 0) {
@@ -60,5 +60,16 @@ http.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+interface HttpClient {
+  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>
+  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+}
+
+// The response interceptor unwraps AxiosResponse and returns the API payload.
+const http = axiosInstance as HttpClient
 
 export default http

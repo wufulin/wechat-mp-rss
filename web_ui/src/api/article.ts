@@ -163,19 +163,17 @@ export const deleteArticle = (id: number) => {
 
 /**
  * 清空所有文章
- * @param id 无实际作用（保留参数）
  * @returns 清空结果
  */
-export const ClearArticle = (id: number) => {
+export const ClearArticle = () => {
   return http.delete<{code: number, message: string}>(`/wx/articles/clean`)
 }
 
 /**
  * 清空重复文章
- * @param id 无实际作用（保留参数）
  * @returns 清空结果
  */
-export const ClearDuplicateArticle = (id: number) => {
+export const ClearDuplicateArticle = () => {
   return http.delete<{code: number, message: string}>(`/wx/articles/clean_duplicate_articles`)
 }
 

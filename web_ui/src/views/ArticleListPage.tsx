@@ -31,7 +31,7 @@ import { getSubscriptions, SubscriptionListResult } from '@/api/subscription'
 import { formatDateTime } from '@/utils/date'
 import dayjs from 'dayjs'
 import ExportModal from '@/components/ExportModal'
-import { Trash2, Download, Wifi, ChevronDown, Loader2, Edit, Tags, Search, RotateCcw, Sparkles, Undo2, EyeOff, Info, CheckCircle2, Ban } from 'lucide-react'
+import { Trash2, Download, Wifi, ChevronDown, Loader2, Edit, Search, RotateCcw, Sparkles, Undo2, EyeOff, Info, CheckCircle2, Ban } from 'lucide-react'
 import { reExtractTags, startMissingTagsJob, getMissingTagsJobStatus } from '@/api/tools'
 
 const AI_FILTER_BATCH_SIZE = 1
@@ -105,6 +105,7 @@ const ArticleListPage: React.FC = () => {
   const [articleDetailLoading, setArticleDetailLoading] = useState(false)
   const exportModalRef = React.useRef<any>(null)
   const aiFilterControlRef = useRef<'running' | 'paused' | 'stopped'>('running')
+  const getAiFilterControl = (): 'running' | 'paused' | 'stopped' => aiFilterControlRef.current
   const articleModalVisibleRef = useRef(articleModalVisible)
   const currentArticleRef = useRef<Article | null>(null)
   const { toast } = useToast()
@@ -211,19 +212,23 @@ const ArticleListPage: React.FC = () => {
     aiFilterControlRef.current = 'running'
     setAiFiltering(true)
 
-    let task = { ...initialTask, status: 'running' as const, errorMessage: undefined }
+    let task: AiFilterTaskState = {
+      ...initialTask,
+      status: 'running',
+      errorMessage: undefined
+    }
     setAiFilterTask(task)
     persistAiFilterTask(task)
 
     while (task.pendingIds.length > 0) {
-      if (aiFilterControlRef.current === 'paused') {
+      if (getAiFilterControl() === 'paused') {
         task = { ...task, status: 'paused', currentBatchIds: [] }
         setAiFilterTask(task)
         await finalizeAiFilterTask(task)
         return
       }
 
-      if (aiFilterControlRef.current === 'stopped') {
+      if (getAiFilterControl() === 'stopped') {
         task = { ...task, status: 'stopped', currentBatchIds: [] }
         setAiFilterTask(task)
         await finalizeAiFilterTask(task)

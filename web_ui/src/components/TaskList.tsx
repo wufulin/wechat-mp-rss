@@ -25,10 +25,10 @@ interface TaskListProps {
   isMobile: boolean
   onPageChange?: (page: number) => void
   onLoadMore?: () => void
-  onEdit?: (id: number) => void
-  onTest?: (id: number) => void
-  onRun?: (id: number) => void
-  onDelete?: (id: number) => void
+  onEdit?: (id: string) => void
+  onTest?: (id: string) => void
+  onRun?: (id: string) => void
+  onDelete?: (id: string) => void
   actions?: (record: MessageTask) => React.ReactNode
   mobileActions?: (record: MessageTask) => React.ReactNode
 }

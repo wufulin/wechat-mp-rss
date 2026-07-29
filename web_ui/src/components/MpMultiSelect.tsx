@@ -26,6 +26,7 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
   const [currentPage, setCurrentPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const pageSize = 10
+  const getMpId = (mp: MpItem) => mp.id || mp.mp_id
 
   const formatCoverUrl = (url: string) => {
     if (!url) return ''
@@ -36,15 +37,15 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
   }
 
   const filteredMps = useMemo(() => {
-    return mpList.filter((mp: MpItem) => 
-      !selectedMps.some((selected: MpItem) => (selected as any).id === (mp as any).id)
+    return mpList.filter((mp) =>
+      !selectedMps.some((selected) => getMpId(selected) === getMpId(mp))
     )
   }, [mpList, selectedMps])
 
-  const fetchMps = async (reset = true) => {
+  const fetchMps = async (reset = true, page = currentPage) => {
     setLoading(true)
     try {
-      let newPage = currentPage
+      let newPage = page
       let newMpList = mpList
       
       if (reset) {
@@ -52,24 +53,24 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
         newMpList = []
       }
       
-      const res: any = await searchMps(searchKeyword, { 
+      const res = await searchMps(searchKeyword, {
         page: newPage,
         pageSize: pageSize
       })
       
-      const mappedList = (res.list || []).map((item: any) => ({
+      const mappedList: MpItem[] = (res.list || []).map((item) => ({
         id: item.mp_id || item.id,
         mp_id: item.mp_id || item.id,
         mp_name: item.mp_name,
-        mp_cover: item.avatar || item.mp_cover || '',
-        avatar: item.avatar || item.mp_cover || ''
+        mp_cover: item.mp_cover || '',
+        avatar: item.mp_cover || ''
       }))
       
       if (reset) {
         newMpList = mappedList
       } else {
-        const newMps = mappedList.filter((newMp: MpItem) => 
-          !newMpList.some(existingMp => existingMp.id === newMp.id)
+        const newMps = mappedList.filter((newMp) =>
+          !newMpList.some(existingMp => getMpId(existingMp) === getMpId(newMp))
         )
         newMpList = [...newMpList, ...newMps]
       }
@@ -85,7 +86,7 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
   const loadMore = async () => {
     const nextPage = currentPage + 1
     setCurrentPage(nextPage)
-    await fetchMps(false)
+    await fetchMps(false, nextPage)
   }
 
   const handleSearch = () => {
@@ -93,19 +94,19 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
   }
 
   const toggleSelect = (mp: MpItem) => {
-    const index = selectedMps.findIndex((m: MpItem) => (m as any).id === (mp as any).id)
+    const index = selectedMps.findIndex((m) => getMpId(m) === getMpId(mp))
     let newSelectedMps: MpItem[]
     if (index === -1) {
       newSelectedMps = [...selectedMps, mp]
     } else {
-      newSelectedMps = selectedMps.filter(m => m.id !== mp.id)
+      newSelectedMps = selectedMps.filter(m => getMpId(m) !== getMpId(mp))
     }
     setSelectedMps(newSelectedMps)
     onChange?.(newSelectedMps)
   }
 
   const removeSelected = (mp: MpItem) => {
-    const newSelectedMps = selectedMps.filter((m: MpItem) => (m as any).id !== (mp as any).id)
+    const newSelectedMps = selectedMps.filter((m) => getMpId(m) !== getMpId(mp))
     setSelectedMps(newSelectedMps)
     onChange?.(newSelectedMps)
   }
@@ -117,8 +118,8 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
 
   const selectAll = () => {
     const newSelectedMps = [...selectedMps]
-    filteredMps.forEach((mp: MpItem) => {
-      if (!newSelectedMps.some((m: MpItem) => (m as any).id === (mp as any).id)) {
+    filteredMps.forEach((mp) => {
+      if (!newSelectedMps.some((m) => getMpId(m) === getMpId(mp))) {
         newSelectedMps.push(mp)
       }
     })
@@ -127,17 +128,17 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
   }
 
   const parseSelected = (data: MpItem[]) => {
-    const parsed = data.map((item: MpItem) => {
-      const found = mpList.find((mp: MpItem) => (mp as any).id === (item as any).id || mp.mp_id === item.mp_id)
+    const parsed = data.map((item) => {
+      const found = mpList.find((mp) => getMpId(mp) === getMpId(item))
       return found || {
-        id: (item as any).id || item.mp_id,
+        id: getMpId(item),
         mp_id: item.mp_id,
         mp_name: item.mp_name,
-        mp_cover: (item as any).mp_cover || item.avatar || '',
-        avatar: item.avatar || (item as any).mp_cover || ''
+        mp_cover: item.mp_cover || item.avatar || '',
+        avatar: item.avatar || item.mp_cover || ''
       }
     })
-    setSelectedMps(parsed as MpItem[])
+    setSelectedMps(parsed)
   }
 
   useImperativeHandle(ref, () => ({
@@ -193,13 +194,13 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
                 <div className="flex flex-wrap gap-2">
                 {selectedMps.map((mp: MpItem) => (
                     <Badge
-                      key={(mp as any).id || mp.mp_id}
+                      key={getMpId(mp)}
                       variant="secondary"
                       className="flex items-center gap-1 pr-1"
                     >
                       <Avatar className="h-5 w-5">
-                        {((mp as any).mp_cover || mp.avatar) && (
-                          <AvatarImage src={formatCoverUrl((mp as any).mp_cover || mp.avatar)} alt={mp.mp_name} />
+                        {(mp.mp_cover || mp.avatar) && (
+                          <AvatarImage src={formatCoverUrl(mp.mp_cover || mp.avatar)} alt={mp.mp_name} />
                         )}
                         <AvatarFallback>{mp.mp_name?.[0] || 'M'}</AvatarFallback>
                       </Avatar>
@@ -227,13 +228,13 @@ const MpMultiSelect = forwardRef<MpMultiSelectRef, MpMultiSelectProps>(({ value 
               <div className="flex flex-wrap gap-2">
                 {filteredMps.map((mp: MpItem) => (
                   <div
-                    key={(mp as any).id || mp.mp_id}
+                    key={getMpId(mp)}
                     className="px-3 py-1.5 rounded-full cursor-pointer bg-muted hover:bg-muted/80 transition-colors flex items-center gap-2"
                     onClick={() => toggleSelect(mp)}
                   >
                     <Avatar className="h-6 w-6">
-                      {((mp as any).mp_cover || mp.avatar) && (
-                        <AvatarImage src={formatCoverUrl((mp as any).mp_cover || mp.avatar)} alt={mp.mp_name} />
+                      {(mp.mp_cover || mp.avatar) && (
+                        <AvatarImage src={formatCoverUrl(mp.mp_cover || mp.avatar)} alt={mp.mp_name} />
                       )}
                       <AvatarFallback>{mp.mp_name?.[0] || 'M'}</AvatarFallback>
                     </Avatar>

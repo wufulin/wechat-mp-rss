@@ -21,7 +21,6 @@ const TagList: React.FC = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [tags, setTags] = useState<TagType[]>([])
-  const [allTags, setAllTags] = useState<TagType[]>([]) // 存储所有标签用于搜索
   const [searchText, setSearchText] = useState('')
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
   const [pagination, setPagination] = useState({
@@ -45,8 +44,6 @@ const TagList: React.FC = () => {
         limit: 10000
       }) as unknown as { list?: TagType[]; total?: number }
       const allTagsData = allRes.list || []
-      setAllTags(allTagsData)
-      
       // 应用搜索过滤
       let filteredTags = allTagsData
       if (searchText.trim()) {
@@ -118,7 +115,6 @@ const TagList: React.FC = () => {
     try {
       setStatusUpdatingIds(prev => [...prev, tag.id])
       setTags(prev => prev.map(item => item.id === tag.id ? { ...item, status: nextStatus } : item))
-      setAllTags(prev => prev.map(item => item.id === tag.id ? { ...item, status: nextStatus } : item))
       await updateTagStatus(tag, nextStatus)
       toast({
         title: t('tags.messages.statusUpdateSuccess'),
@@ -126,7 +122,6 @@ const TagList: React.FC = () => {
       })
     } catch (error) {
       setTags(prev => prev.map(item => item.id === tag.id ? { ...item, status: tag.status } : item))
-      setAllTags(prev => prev.map(item => item.id === tag.id ? { ...item, status: tag.status } : item))
       toast({
         variant: "destructive",
         title: t('tags.messages.statusUpdateFailed'),

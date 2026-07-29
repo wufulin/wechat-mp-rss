@@ -1,13 +1,21 @@
 import http from './http'
 import type { MessageTask, MessageTaskUpdate } from '@/types/messageTask'
 
+interface MessageTaskListResult {
+  list: MessageTask[]
+  total: number
+  page?: {
+    offset: number
+    limit: number
+  }
+}
+
 export const listMessageTasks = (params?: { offset?: number; limit?: number }) => {
-  console.log(params)
   const apiParams = {
     offset: (params?.offset || 0) ,
     limit: params?.limit || 10
   }
-  return http.get<MessageTask>('/wx/message_tasks', { params: apiParams })
+  return http.get<MessageTaskListResult>('/wx/message_tasks', { params: apiParams })
 }
 export const getMessageTask = (id: string) => {
   return http.get<MessageTask>(`/wx/message_tasks/${id}`)

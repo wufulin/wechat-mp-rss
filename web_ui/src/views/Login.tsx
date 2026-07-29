@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast'
 import { login } from '@/api/auth'
 import { useForm } from 'react-hook-form'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { User, Lock, Zap, Shield, Globe, CheckCircle, Activity } from 'lucide-react'
+import { User, Lock, Zap, Shield, Globe, CheckCircle } from 'lucide-react'
 
 interface LoginFormData {
   username: string
