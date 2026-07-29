@@ -7,8 +7,8 @@ WORKDIR /app
 # 配置 npm 使用国内镜像源（淘宝镜像）
 RUN npm config set registry https://registry.npmmirror.com
 
-# 安装 pnpm
-RUN npm install -g pnpm
+# 安装与 CI 一致的 pnpm
+RUN npm install -g pnpm@11.5.2
 
 # 配置 pnpm 使用国内镜像源
 RUN pnpm config set registry https://registry.npmmirror.com
@@ -27,7 +27,8 @@ COPY web_ui/ .
 RUN pnpm build
 
 # 多阶段构建：第二阶段 - Python 应用（使用国内镜像源）
-FROM --platform=$BUILDPLATFORM docker.1ms.run/python:3.11-slim
+# 最终阶段跟随目标平台，避免多架构清单与实际镜像架构不一致。
+FROM docker.1ms.run/python:3.11-slim
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -124,4 +125,3 @@ EXPOSE 8001
 
 # 启动命令
 CMD ["bash", "start.sh"]
-

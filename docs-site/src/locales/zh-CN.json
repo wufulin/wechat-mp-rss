@@ -130,6 +130,7 @@
       {
         "title": "开发文档",
         "items": [
+          { "title": "运行与发布架构", "path": "/docs/architecture", "label": "架构" },
           { "title": "架构概览", "path": "/docs/dev/architecture-overview", "label": "开发" },
           { "title": "后端结构", "path": "/docs/dev/backend-structure", "label": "开发" },
           { "title": "前端结构", "path": "/docs/dev/frontend-structure", "label": "开发" },
@@ -147,6 +148,7 @@
           { "title": "uv 虚拟环境", "path": "/docs/UV_VENV_GUIDE", "label": "参考" },
           { "title": "标签聚类检查清单", "path": "/docs/TAG_CLUSTER_CHECKLIST", "label": "清单" },
           { "title": "路线图", "path": "/docs/ROADMAP", "label": "规划" },
+          { "title": "版本化部署决策", "path": "/docs/adr/0001-versioned-dockerhub-gcp-deployment", "label": "ADR" },
           { "title": "贡献指南", "path": "/docs/CONTRIBUTING", "label": "协作" }
         ]
       }

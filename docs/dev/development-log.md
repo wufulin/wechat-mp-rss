@@ -2,7 +2,22 @@
 
 本文档记录 WeRSS 的版本更新。`README` 只保留最近几次更新摘要，完整记录见本页。
 
-## v1.1.5（当前开发线）
+## v1.1.6（当前开发线）
+
+**CI/CD 与发布**
+
+- 推送 `vX.Y.Z` 标签后，校验各处版本号并运行完整质量检查
+- 构建 `linux/amd64`、`linux/arm64` Docker Hub 镜像，并发布明确语义化版本标签
+- 通过 GitHub `production` environment 和专用 SSH 身份部署到 GCP
+- 生产 Compose 从 Docker Hub 拉取版本镜像，部署前备份 PostgreSQL，失败时恢复上一镜像
+
+**部署安全**
+
+- 生产配置与发布版本分离为 `.env` 和 `.release.env`
+- 部署等待容器健康，并核对应用接口返回的版本号
+- MinIO 从移动的 `latest` 标签改为固定发布标签
+
+## v1.1.5
 
 **科技热点与主链路**
 

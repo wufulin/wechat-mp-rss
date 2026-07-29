@@ -10,6 +10,35 @@ WeRSS 支持两种部署模式，按需选择：
 
 ---
 
+## 版本化镜像
+
+默认镜像为 `docker.io/franklin888/werss`。普通 Compose 启动会拉取
+`.env` 中 `WERSS_IMAGE_TAG` 指定的版本；示例文件为方便试用默认 `latest`。
+
+生产环境必须使用精确语义化版本：
+
+```env
+WERSS_IMAGE=docker.io/franklin888/werss
+WERSS_IMAGE_TAG=1.1.6
+```
+
+正式发布由 `.github/workflows/release-deploy.yaml` 处理。推送与源码版本一致的
+`vX.Y.Z` 标签后，工作流会运行质量检查、构建多架构镜像、推送 Docker Hub，
+再通过 GitHub `production` environment 部署 GCP。生产 Compose 不使用 Git SHA
+或移动的 `latest` 作为实际发布版本。
+
+服务器 `/opt/werss` 中的配置分为：
+
+- `.env`：数据库、账户、域名等长期配置，CD 不会覆盖。
+- `.release.env`：当前 `WERSS_IMAGE_TAG`，只在健康部署成功后更新。
+- `backups/`：每次升级前生成的 PostgreSQL 压缩备份。
+- `.rollback/`：上一版 Compose 定义与版本号，用于健康失败时恢复镜像。
+
+重新运行失败的 GitHub Actions run 不会创建新版本；不要删除后重建同名标签，
+因为 `X.Y.Z` 镜像应保持不可变。回滚时部署一个已经发布的旧版本标签。
+
+---
+
 ## 模式一：完整栈
 
 包含 **Traefik**（80/443）、PostgreSQL、MinIO 和 WeRSS。`werss` 不默认映射 `8001`，由 Traefik 按 `.env` 中的 `WERSS_HOST` 做 Host 匹配并转发到容器内 `8001`；证书由 Traefik 的 Let’s Encrypt（TLS-ALPN）申请。
@@ -29,7 +58,7 @@ docker compose up -d
 在完整栈基础上叠加开发配置（DEBUG=True、容器名加 `-dev` 后缀、数据目录隔离）：
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 ---
@@ -40,7 +69,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 ```bash
 # 编辑 .env，设置 DB 和 MinIO 相关变量
-docker compose -f docker-compose.app-only.yml up -d --build
+docker compose -f docker-compose.app-only.yml up -d
 ```
 
 ### 数据库连接
@@ -145,6 +174,8 @@ MINIO_PUBLIC_URL=https://cdn.example.com
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `WERSS_PUBLISH_PORT` | `8001` | 对外映射的端口 |
+| `WERSS_IMAGE` | `docker.io/franklin888/werss` | WeRSS 镜像仓库 |
+| `WERSS_IMAGE_TAG` | `latest` | 镜像标签；生产必须设置精确 `X.Y.Z` |
 | `WERSS_CONTAINER_NAME` | `werss` | 容器名 |
 | `WERSS_DATA_DIR` | `./data/werss-data` | 数据目录 |
 | `WERSS_LOGS_DIR` | `./logs` | 日志目录 |

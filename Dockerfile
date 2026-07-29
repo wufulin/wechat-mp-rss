@@ -7,8 +7,8 @@ FROM --platform=$BUILDPLATFORM node:20.18.0-slim AS frontend-builder
 # 设置工作目录
 WORKDIR /app
 
-# 安装 pnpm
-RUN npm install -g pnpm
+# 安装与 CI 一致的 pnpm
+RUN npm install -g pnpm@11.5.2
 
 # 复制前端依赖文件
 COPY web_ui/package.json web_ui/pnpm-lock.yaml* web_ui/
@@ -25,7 +25,8 @@ COPY web_ui/ .
 RUN pnpm build
 
 # 多阶段构建：第二阶段 - Python 应用
-FROM --platform=$BUILDPLATFORM python:3.11-slim
+# 最终阶段跟随目标平台，确保多架构清单中的镜像架构真实匹配。
+FROM python:3.11-slim
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -62,10 +63,16 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # 安装 Playwright 浏览器：放在「复制业务代码」之前，仅 requirements/浏览器类型变更才重跑本层。
 # 注意：勿把浏览器装到 RUN --mount=type=cache 目录，否则缓存不会写入镜像层，运行时会缺浏览器。
 ARG BROWSER_TYPE=firefox
+ARG TARGETARCH
 ENV BROWSER_TYPE=${BROWSER_TYPE} \
     PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000
-RUN export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000 && \
-    ( export PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright && \
+RUN export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000; \
+    if [ "$TARGETARCH" = "arm64" ]; then \
+        export PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net; \
+    else \
+        export PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright; \
+    fi && \
+    ( \
       python3 -m playwright install ${BROWSER_TYPE} --with-deps || \
       ( echo "npmmirror 失败，改用官方 CDN..." && \
         PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net python3 -m playwright install ${BROWSER_TYPE} --with-deps ) \

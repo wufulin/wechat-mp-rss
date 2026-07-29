@@ -4,7 +4,7 @@
 
 # WeRSS - 自托管微信公众号内容聚合与AI分析系统
 
-![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.6-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 ![GitHub Stars](https://img.shields.io/github/stars/letuswerss/werss?style=social)
@@ -423,7 +423,7 @@ docker compose up -d
 #### 已有外部数据库 / 对象存储
 
 ```bash
-docker compose -f docker-compose.app-only.yml up -d --build
+docker compose -f docker-compose.app-only.yml up -d
 ```
 
 #### Docker Compose 开发环境
@@ -685,6 +685,13 @@ werss/
 
 ## 更新日志
 
+### v1.1.6
+
+**版本化镜像与自动部署**
+- 语义化版本标签触发 Docker Hub 多架构镜像发布
+- 生产 Compose 使用明确版本号拉取镜像，不再在服务器构建
+- GCP 部署加入数据库备份、健康检查与上一镜像版本回滚
+
 ### v1.1.5
 
 **内容分析与运维增强**
@@ -708,7 +715,7 @@ werss/
 - 形成公众号采集、RSS 输出、标签管理、消息任务、后台管理这些基础能力
 - 前后端分离结构和任务调度框架基本定型
 
-这里只显示最近 3 次更新，更多版本说明见 [开发日志](https://letuswerss.github.io/werss/docs/dev/development-log)。
+这里只显示最近几次更新，更多版本说明见 [开发日志](https://letuswerss.github.io/werss/docs/dev/development-log)。
 
 ---
 
