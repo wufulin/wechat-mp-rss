@@ -11,8 +11,8 @@ server:
    enable_job: ${ENABLE_JOB:-True}
    #代码修改自动重启服务，默认为False
    auto_reload: ${AUTO_RELOAD:-False}
-   #最大线程数 默认2个线程，不建议超过4个线程
-   threads: ${THREADS:-2}
+   #最大线程数 默认1个线程（多 worker 会导致定时任务、心跳保活、日志重复执行/输出），不建议超过4个线程
+   threads: ${THREADS:-1}
    #通过web方式授权二维码 默认False 
    auth_web: ${WERSS_AUTH_WEB:-False}
    #免扫码自动续期：每小时自动用已保存凭证（data/wx.lic）续期微信公众平台登录态，默认True
