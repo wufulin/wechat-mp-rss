@@ -2,8 +2,46 @@ import uvicorn
 from core.config import cfg
 from core.print import print_warning, print_info
 from core.debug_log import clear_debug_log
+from core.log import logger
 import threading
 import os
+
+# uvicorn 日志配置：让 uvicorn.error / uvicorn.access 日志带时间戳
+UVICORN_LOG_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "()": "uvicorn.logging.DefaultFormatter",
+            "fmt": "%(asctime)s - %(levelprefix)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "use_colors": None,
+        },
+        "access": {
+            "()": "uvicorn.logging.AccessFormatter",
+            "fmt": '%(asctime)s - %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "use_colors": None,
+        },
+    },
+    "handlers": {
+        "default": {
+            "formatter": "default",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+        },
+        "access": {
+            "formatter": "access",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
+        "uvicorn.error": {"level": "INFO"},
+        "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
+    },
+}
 
 def print_database_source():
     """输出数据库配置来源"""
@@ -84,7 +122,7 @@ if __name__ == '__main__':
     
     # 注意：定时任务将在 web.py 的 startup 事件中启动（如果使用 uvicorn）
     # 这样可以确保每次重新加载时都会重新启动定时任务
-    print("启动服务器")
+    logger.info("启动服务器")
     AutoReload=cfg.get("server.auto_reload",False)
     thread=cfg.get("server.threads",1)
     uvicorn.run("web:app", host="0.0.0.0", port=int(cfg.get("port",8001)),
@@ -92,5 +130,6 @@ if __name__ == '__main__':
             reload_dirs=['core','web_ui'],
             reload_excludes=['static','web_ui','data'], 
             workers=thread,
+            log_config=UVICORN_LOG_CONFIG,
             )
     pass

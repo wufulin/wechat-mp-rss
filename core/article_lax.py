@@ -1,5 +1,6 @@
 from core.models import Article,Feed,DATA_STATUS
 from core.db import DB
+from core.log import logger
 import json
 class ArticleInfo():
     #没有内容的文章数量
@@ -31,4 +32,4 @@ def laxArticle():
     return info.__dict__
     pass
 ARTICLE_INFO=laxArticle()
-print(ARTICLE_INFO)
+logger.debug(f"文章统计信息: {ARTICLE_INFO}")

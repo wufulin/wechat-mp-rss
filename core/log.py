@@ -62,3 +62,6 @@ console_handler.setFormatter(console_formatter)
 # 将处理器添加到logger
 logger.addHandler(handler)
 logger.addHandler(console_handler)
+
+# 不向 root logger 传播，避免经 root 的 basicConfig handler 重复输出
+logger.propagate = False

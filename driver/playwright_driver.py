@@ -8,6 +8,8 @@ import random
 import uuid
 import asyncio
 from socket import timeout
+import logging
+logger = logging.getLogger(__name__)
 
 # 设置环境变量
 browsers_name = os.getenv("BROWSER_TYPE", "firefox")
@@ -66,7 +68,7 @@ class PlaywrightController:
                 browser_type = self.driver.webkit
             else:
                 browser_type = self.driver.chromium  # 默认使用chromium
-            print(f"启动浏览器: {browser_name}, 无头模式: {headless}, 移动模式: {mobile_mode}, 兼容配置: {browser_compat}")
+            logger.info(f"启动浏览器: {browser_name}, 无头模式: {headless}, 移动模式: {mobile_mode}, 兼容配置: {browser_compat}")
             # 设置启动选项
             launch_options = {
                 "headless": headless
@@ -107,9 +109,9 @@ class PlaywrightController:
             self.isClose = False
             return self.page
         except Exception as e:
-            print(f"浏览器启动失败: {str(e)}")
+            logger.error(f"浏览器启动失败: {str(e)}")
             tips="Docker环境;您可以设置环境变量INSTALL=True并重启Docker自动安装浏览器环境;如需要切换浏览器可以设置环境变量BROWSER_TYPE=firefox 支持(firefox,webkit,chromium),开发环境请手工安装"
-            print(tips)
+            logger.error(tips)
             self.cleanup()
             raise Exception(tips)
         
@@ -118,7 +120,7 @@ class PlaywrightController:
             json_obj = json.loads(json_string)
             return json_obj
         except json.JSONDecodeError as e:
-            print(f"JSON解析错误: {e}")
+            logger.error(f"JSON解析错误: {e}")
             return ""
 
     def parse_string_to_dict(self, kv_str: str):
@@ -182,7 +184,7 @@ class PlaywrightController:
 
     def _get_realistic_user_agent(self, mobile_mode=False):
         """获取更真实的User-Agent"""
-        print(f"浏览器特征设置完成: {'移动端' if mobile_mode else '桌面端'}")
+        logger.debug(f"浏览器特征设置完成: {'移动端' if mobile_mode else '桌面端'}")
         if mobile_mode:
             # 移动端User-Agent
             mobile_agents = [
@@ -318,13 +320,13 @@ class PlaywrightController:
                 self.driver.stop()
             self.isClose = True
         except Exception as e:
-            print(f"资源清理失败: {str(e)}")
+            logger.error(f"资源清理失败: {str(e)}")
 
     def dict_to_json(self, data_dict):
         try:
             return json.dumps(data_dict, ensure_ascii=False, indent=2)
         except (TypeError, ValueError) as e:
-            print(f"字典转JSON失败: {e}")
+            logger.error(f"字典转JSON失败: {e}")
             return ""
 
 ControlDriver=PlaywrightController()

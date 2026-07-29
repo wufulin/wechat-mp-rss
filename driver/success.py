@@ -1,5 +1,7 @@
 from .token import set_token
 from core.print import print_warning,print_success
+import logging
+logger = logging.getLogger(__name__)
 #判断是否是有效登录 
 
 # 初始化全局变量
@@ -35,7 +37,7 @@ def Success(data:dict,ext_data:dict={}):
             if ext_data is not {}:
                 print_success(f"名称：{ext_data['wx_app_name']}")
             if data['expiry'] !=None:
-                print_success(f"有效时间: {data['expiry']['expiry_time']} (剩余秒数: {data['expiry']['remaining_seconds']}) Token: {data['token']}")
+                logger.info(f"有效时间: {data['expiry']['expiry_time']} (剩余秒数: {data['expiry']['remaining_seconds']}) Token: {str(data['token'])[:8]}...")
                 set_token(data,ext_data)
                 setStatus(True)
             else:
@@ -43,5 +45,5 @@ def Success(data:dict,ext_data:dict={}):
                 setStatus(False)
 
     else:
-            print("\n登录失败，请检查上述错误信息")
+            logger.warning("登录失败，请检查上述错误信息")
             setStatus(False)

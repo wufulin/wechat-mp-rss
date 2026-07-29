@@ -14,14 +14,14 @@ from core.config import set_config, cfg
 router = APIRouter(prefix=f"/auth", tags=["认证"])
 from driver.success import Success
 from driver.wx_api import get_qr_code #通过API登录
+from core.log import logger
 def ApiSuccess(data):
     if data != None:
-            print("\n登录结果:")
-            print(f"Token: {data['token']}")
+            logger.info(f"登录成功，Token: {str(data['token'])[:8]}...")
             set_config("token",data['token'])
             cfg.reload()
     else:
-            print("\n登录失败，请检查上述错误信息")
+            logger.warning("登录失败，请检查上述错误信息")
 @router.get("/qr/code", summary="获取登录二维码")
 async def get_qrcode(current_user=Depends(get_current_user)):
 

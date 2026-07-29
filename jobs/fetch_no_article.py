@@ -3,6 +3,7 @@ import core.db as db
 from core.wx.base import WxGather
 from time import sleep
 from core.print import print_success,print_error
+from core.log import logger
 import random
 from driver.wxarticle import Web
 DB=db.Db(tag="内容修正")
@@ -28,7 +29,7 @@ def fetch_articles_without_content():
             else:
                 url = f"https://mp.weixin.qq.com/s/{article.id}"
             
-            print(f"正在处理文章: {article.title}, URL: {url}")
+            logger.info(f"正在处理文章: {article.title}, URL: {url}")
             
             # 获取内容
             if cfg.get("gather.content_mode","web"):
@@ -48,7 +49,7 @@ def fetch_articles_without_content():
                 print_error(f"获取文章 {article.title} 内容失败")
                 
     except Exception as e:
-        print(f"处理过程中发生错误: {e}")
+        logger.error(f"处理过程中发生错误: {e}")
     finally:
         Web.Close()
 from core.task import TaskScheduler

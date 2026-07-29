@@ -6,6 +6,7 @@ from core.rss import RSS
 from core.models.feed import Feed
 import json
 from .base import success_response, error_response
+from core.log import logger
 from core.auth import get_current_user
 from core.config import cfg
 from apis.base import format_search_kw
@@ -93,7 +94,7 @@ async def get_rss_feeds(
             media_type="application/xml"
         )
     except Exception as e:
-        print(f"获取RSS订阅列表错误: {str(e)}")
+        logger.error(f"获取RSS订阅列表错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail=error_response(

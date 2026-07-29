@@ -74,7 +74,7 @@ class WxGather:
         return date(2025, 12, 1)
     def Model(self,type=None):
         type=type or cfg.get("gather.model","web")
-        print(f"采集模式:{type}")
+        logger.info(f"采集模式:{type}")
         if type=="app":
             from core.wx.model.app import MpsAppMsg
             wx=MpsAppMsg()
@@ -349,7 +349,7 @@ class WxGather:
         ))
 
     def Item_Over(self,item=None,CallBack=None):
-        print(f"item end")
+        logger.debug("item end")
         _cookies=[{'name': c.name, 'value': c.value, 'domain': c.domain,'expiry':c.expires,'expires':c.expires} for c in self._cookies]
         _cookies.append({'name':'token','value':self.token})
         if CallBack is not None:
@@ -374,7 +374,7 @@ class WxGather:
 
     def Over(self,CallBack=None):
         if getattr(self, 'articles', None) is not None:
-            print(f"成功{len(self.articles)}条")
+            logger.info(f"成功{len(self.articles)}条")
             rss=RSS()
             mp_id=""
             try:
@@ -432,7 +432,7 @@ class WxGather:
                 feed = session.query(Feed).filter(Feed.id == mp_id).first()
                 if feed:
                     for key, value in update_data.items():
-                        print(f"更新公众号{mp_id}的{key}为{value}")
+                        logger.debug(f"更新公众号{mp_id}的{key}为{value}")
                         setattr(feed, key, value)
                     session.commit()
                 else:

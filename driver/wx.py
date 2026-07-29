@@ -17,6 +17,8 @@ from threading import Timer, Lock
 from .cookies import expire
 import json
 from core.print import print_error,print_warning,print_info,print_success
+import logging
+logger = logging.getLogger(__name__)
 class Wx:
     _haslogin=False
     SESSION=None
@@ -78,14 +80,14 @@ class Wx:
                     
             return None
         except Exception as e:
-            print(f"提取token时出错: {str(e)}")
+            logger.error(f"提取token时出错: {str(e)}")
             return None
     def switch_account(self, username: str = ""):
         """切换账号功能
         Args:
             username: 目标账号的用户名，如果为空则切换到其他可用账号
         """
-        print("开始切换账号...")
+        logger.info("开始切换账号...")
         try:
             # 定时续期场景：先尝试 Token 免扫码登录；
             # 失败时只标记失效并记录日志，不主动发起扫码（交由 failauth 兜底链路出码通知），
@@ -130,7 +132,7 @@ class Wx:
                                                 ".switch-account-dialog .switch-account-dialog_section:has-text('服务号') .section-item:not(:has-text('当前登录'))"
                                             )
                             account_count = accounts.count()
-                            print(f"当前一共有{account_count}个可切换账号")
+                            logger.info(f"当前一共有{account_count}个可切换账号")
                             import random
                             if account_count > 0:
                                 # 点击第一个可切换的账号
@@ -140,7 +142,7 @@ class Wx:
                                 nick_name=accounts.nth(random_index).locator(".section-item__nickname")
                                 account_id=p.text_content()
                                 account_name=nick_name.text_content()
-                                print(f"账号: {account_name} ID:{account_id}")
+                                logger.info(f"账号: {account_name} ID:{account_id}")
                                 p.click()
                                 # 等待页面加载并验证切换成功
                                 page.wait_for_load_state("networkidle", timeout=10000)
@@ -177,12 +179,12 @@ class Wx:
                 "msg":"微信公众平台登录脚本正在运行，请勿重复运行！"}
        
         self.Clean()
-        print("子线程执行中")
+        logger.debug("子线程执行中")
         from core.thread import ThreadManager
         self.thread = ThreadManager(target=self.wxLogin,args=(CallBack,False))  # 传入函数名
         self.thread.start()  # 启动线程
         from core.ver import VERSION
-        print(f"微信公众平台登录 v{VERSION}")
+        logger.info(f"微信公众平台登录 v{VERSION}")
         return WX_API.QRcode()
     
     wait_time=1
@@ -197,7 +199,7 @@ class Wx:
             self.Call_Success()
             # 检查登录状态
             if "home" not in self.controller.driver.current_url:
-                print("检测到登录已过期，请重新登录")
+                logger.warning("检测到登录已过期，请重新登录")
                 raise Exception(f"登录已经失效，请重新登录")
         except Exception as e:
             raise Exception(f"浏览器关闭")  # 重新抛出异常以便外部捕获处理
@@ -285,7 +287,7 @@ class Wx:
                     size=os.path.getsize(self.wx_login_url)
                     return size>364
                 except Exception as e:
-                    print(f"二维码图片获取失败: {str(e)}")
+                    logger.error(f"二维码图片获取失败: {str(e)}")
         return self.isLock
     def wxLogin(self, CallBack=None, NeedExit=False):
         """
@@ -336,19 +338,19 @@ class Wx:
             # 获取二维码图片URL
             qrcode = page.query_selector(qr_tag)
             code_src=qrcode.get_attribute("src")
-            print("正在生成二维码图片...")
-            print(f"code_src:{code_src}")
+            logger.info("正在生成二维码图片...")
+            logger.debug(f"code_src:{code_src}")
             # qrcode = page.query_selector(qr_tag)
            
             # 使用Playwright截图功能（添加异常处理）
             qrcode.screenshot(path=self.wx_login_url)
 
-            print("二维码已保存为 wx_qrcode.png，请扫码登录...")
+            logger.info("二维码已保存为 wx_qrcode.png，请扫码登录...")
             self.HasCode=True
             if os.path.getsize(self.wx_login_url)<=364:
                 raise Exception("二维码图片获取失败，请重新扫码")
             # 等待登录成功（检测二维码图片加载完成）
-            print("等待扫码登录...")
+            logger.info("等待扫码登录...")
             if self.Notice is not None:
                 self.Notice()
            
@@ -356,7 +358,7 @@ class Wx:
             def handle_frame_navigated(frame):
                 current_url = frame.url
                 if self.WX_HOME in current_url:
-                    print(f"登录成功，正在获取cookie和token...")
+                    logger.info(f"登录成功，正在获取cookie和token...")
             page.on('framenavigated', handle_frame_navigated)
             page.wait_for_event("framenavigated", timeout=60 * 1000)
            
@@ -534,10 +536,10 @@ class Wx:
                 self.controller.context.clear_cookies()
                 return True
             else:
-                print("浏览器未启动，无法操作cookie")
+                logger.warning("浏览器未启动，无法操作cookie")
                 return False
         except Exception as e:
-            print(f"设置cookie过期时出错: {str(e)}")
+            logger.error(f"设置cookie过期时出错: {str(e)}")
             return False
             
     def check_lock(self):

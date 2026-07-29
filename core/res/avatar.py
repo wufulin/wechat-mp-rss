@@ -1,5 +1,6 @@
 
 from core.config import cfg
+from core.log import logger
 import os
 import uuid
 import requests
@@ -34,6 +35,6 @@ def save_avatar_locally(avatar_url):
             f.write(response.content)
         return file_path
     except Exception as e:
-        print(f"保存头像失败: {str(e)}")
+        logger.error(f"保存头像失败: {str(e)}")
         return None
 

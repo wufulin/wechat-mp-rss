@@ -8,6 +8,7 @@ from core.wx import search_Biz
 from .base import success_response, error_response
 from datetime import datetime
 from core.config import cfg
+from core.log import logger
 from core.res import save_avatar_locally
 import csv
 import io
@@ -59,7 +60,7 @@ async def export_mps(
         )
 
     except Exception as e:
-        print(f"导出公众号列表错误: {str(e)}")
+        logger.error(f"导出公众号列表错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_201_CREATED,
             detail=error_response(
@@ -148,7 +149,7 @@ async def import_mps(
 
     except Exception as e:
         session.rollback()
-        print(f"导入公众号列表错误: {str(e)}")
+        logger.error(f"导入公众号列表错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_201_CREATED,
             detail=error_response(
@@ -205,7 +206,7 @@ async def export_mps_opml(
         )
 
     except Exception as e:
-        print(f"导出OPML列表错误: {str(e)}")
+        logger.error(f"导出OPML列表错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(
@@ -258,7 +259,7 @@ async def export_tags(
         )
 
     except Exception as e:
-        print(f"导出标签列表错误: {str(e)}")
+        logger.error(f"导出标签列表错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(
@@ -352,7 +353,7 @@ async def import_tags(
         raise he
     except Exception as e:
         session.rollback()
-        print(f"导入标签列表错误: {str(e)}")
+        logger.error(f"导入标签列表错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(

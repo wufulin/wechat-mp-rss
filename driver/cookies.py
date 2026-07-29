@@ -1,4 +1,6 @@
 import time
+import logging
+logger = logging.getLogger(__name__)
 def expire(cookies:any) :
     """从 cookies 中提取 slave_sid 的过期时间
     兼容两种来源：dict 形式（Playwright 导出的 cookie）和 requests CookieJar 的 Cookie 对象
@@ -32,7 +34,7 @@ def expire(cookies:any) :
                 }
             break
         except (TypeError, ValueError):
-            print(f"slave_sid 的过期时间戳无效: {expires}")
+            logger.warning(f"slave_sid 的过期时间戳无效: {expires}")
             break
     return cookie_expiry
 

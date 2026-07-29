@@ -2,6 +2,8 @@ import yaml
 import sys
 import os
 import argparse
+import logging
+logger = logging.getLogger(__name__)
 from string import Template
 from core.print import print_warning, print_error,print_info
 from .file import FileCrypto
@@ -87,7 +89,7 @@ class Config:
             try:
                 self.crypto = FileCrypto(key)
             except Exception as e:
-                print(f"加密初始化失败: {e}")
+                logger.warning(f"加密初始化失败: {e}")
                 self.encryption_enabled = False
     def parse_args(self):
         parser = argparse.ArgumentParser()
@@ -105,7 +107,7 @@ class Config:
                 return self.crypto.encrypt(data.encode('utf-8')).decode('utf-8')
             return self.crypto.encrypt(data).decode('utf-8')
         except Exception as e:
-            print(f"加密失败: {e}")
+            logger.warning(f"加密失败: {e}")
             return data
 
     def _decrypt(self, data):
@@ -117,7 +119,7 @@ class Config:
                 return self.crypto.decrypt(data.encode('utf-8')).decode('utf-8')
             return self.crypto.decrypt(data).decode('utf-8')
         except Exception as e:
-            print(f"解密失败: {e}")
+            logger.warning(f"解密失败: {e}")
             return data  # 解密失败返回原始数据
 
     def save_config(self):
@@ -189,7 +191,7 @@ class Config:
                         decrypted_content = self._decrypt(content)
                         config = yaml.safe_load(decrypted_content)
                     except Exception as e:
-                        print(f"解密配置文件失败: {e}")
+                        logger.error(f"解密配置文件失败: {e}")
                         sys.exit(1)
                 else:
                     config = yaml.safe_load(content)
@@ -308,4 +310,4 @@ def save_config():
 DEBUG=cfg.get("debug",False)
 APP_NAME=cfg.get("app_name","werss")
 from core.base import *
-print(f"名称:{APP_NAME}\n版本:{VERSION} API_BASE:{API_BASE}")
+logger.info(f"名称:{APP_NAME} 版本:{VERSION} API_BASE:{API_BASE}")

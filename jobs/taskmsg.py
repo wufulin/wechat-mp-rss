@@ -2,6 +2,7 @@ from typing import Union
 from core.db import Db
 from core.config import cfg
 from core.models import MessageTask
+from core.log import logger
 DB = Db()
 DB.init(cfg.get("db"))
 def get_message_task(job_id:Union[str, list]=None) -> list[MessageTask]:
@@ -30,5 +31,5 @@ def get_message_task(job_id:Union[str, list]=None) -> list[MessageTask]:
             return None
         return message_task
     except Exception as e:
-        print(e)
+        logger.error(f"获取消息任务失败: {e}")
     return None

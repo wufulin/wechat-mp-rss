@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import os
 import json
 from core.content_format import format_content
+from core.log import logger
 class RSS:
     cache_dir = os.path.normpath("data/cache/rss")
     content_cache_dir = os.path.normpath("data/cache/content")
@@ -143,7 +144,7 @@ class RSS:
                         content = str(rss_item['content'])
                     ET.SubElement(item, "content:encoded").text = content
                 except Exception as e:
-                    print(f"Error adding content:encoded element: {e}")
+                    logger.error(f"Error adding content:encoded element: {e}")
                 pass
             # ET.SubElement(item, "category").text = rss_item["category"]
             # ET.SubElement(item, "author").text = rss_item["author"]
@@ -222,7 +223,7 @@ class RSS:
                     else:
                         ET.SubElement(entry, "content:encoded").text = content
                 except Exception as e:
-                    print(f"Error adding content:encoded element: {e}")
+                    logger.error(f"Error adding content:encoded element: {e}")
                 pass
         # 生成XML字符串
         tree_str = '<?xml version="1.0" encoding="utf-8"?>\r\n' + \
@@ -338,4 +339,4 @@ class RSS:
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
                 except Exception as e:
-                    print(f"Error deleting {file_path}: {e}")
+                    logger.error(f"Error deleting {file_path}: {e}")
