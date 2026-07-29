@@ -118,7 +118,7 @@ class MpsAppMsg(WxGather):
         super().Start(mp_id=Mps_id)
         if self.Gather_Content:
             Gather_Content=True
-        print(f"APP浏览器模式,是否采集[{Mps_title}]内容：{Gather_Content}\n")
+        logger.info(f"APP浏览器模式,是否采集[{Mps_title}]内容：{Gather_Content}")
         # 获取采集起始日期
         from datetime import datetime
         collect_start_date = self.get_collect_start_date()
@@ -145,9 +145,36 @@ class MpsAppMsg(WxGather):
         found_start_date_article = False  # 标记是否找到了起始日期的文章
         consecutive_existing_count = 0  # 连续遇到已存在文章的数量
         max_consecutive_existing = 3  # 连续遇到多少篇已存在文章后停止处理当前公众号
+        # 判断是否为首次同步（库中还没有该公众号的任何文章）：
+        # 首次同步需要一直回溯到采集起始日期，不能被 MaxPage 限制成只抓一页
+        is_initial_sync = True
+        try:
+            if Mps_id:
+                from core.models import Article
+                import core.db as db
+                from sqlalchemy import func
+                _db = db.Db(tag="首次同步检查")
+                _session = _db.get_session()
+                try:
+                    existing_total = _session.query(func.count(Article.id)).filter(Article.mp_id == Mps_id).scalar() or 0
+                    is_initial_sync = existing_total == 0
+                finally:
+                    _session.close()
+        except Exception as e:
+            logger.warning(f"检查公众号历史文章数量失败: {e}，按首次同步处理")
+        if is_initial_sync:
+            print_info(f"公众号[{Mps_title}]为首次同步，将回溯抓取到采集起始日期 {collect_start_date}")
+        from core.wx.cfg import cfg as _cfg
+        # 安全上限：首次全量回溯最多抓取的页数，防止异常情况下无限翻页
+        max_backfill_pages = int(_cfg.get("gather.max_backfill_pages", 2000))
         while True:
-            # 如果达到MaxPage但还没找到起始日期的文章，继续抓取
-            if i >= MaxPage and found_start_date_article:
+            # 安全上限：首次回溯最多抓取 max_backfill_pages 页
+            if i >= max_backfill_pages:
+                print_info(f"已达到最大回溯页数 {max_backfill_pages}，停止抓取")
+                break
+            # 增量同步（库里已有文章）：达到 MaxPage 且已找到范围内的文章即停止；
+            # 首次同步不受 MaxPage 限制，会一直回溯到采集起始日期或文章列表耗尽
+            if not is_initial_sync and i >= MaxPage and found_start_date_article:
                 print_info(f"已达到最大页数 {MaxPage}，且已找到起始日期 {collect_start_date} 的文章，停止抓取")
                 break
             # 只有当找到早于起始日期的文章，并且已经找到过在范围内的文章时，才停止
@@ -157,7 +184,7 @@ class MpsAppMsg(WxGather):
                 break
             begin = i * count
             params["begin"] = str(begin)
-            print(f"第{i+1}页开始爬取\n")
+            logger.info(f"第{i+1}页开始爬取")
             # 随机暂停几秒，避免过快的请求导致过快的被查到
             time.sleep(random.randint(0,interval))
             try:
@@ -168,17 +195,20 @@ class MpsAppMsg(WxGather):
                 self._cookies =resp.cookies
                 # 流量控制了, 退出
                 if msg['base_resp']['ret'] == 200013:
+                    logger.warning(f"公众号[{Mps_title}]第{i+1}页请求被微信限频(freq control, ret=200013)，本次抓取中止，请稍后重试")
                     super().Error("frequencey control, stop at {}".format(str(begin)))
                     break
-                
+
                 if msg['base_resp']['ret'] == 200003:
                     super().Error("Invalid Session, stop at {}".format(str(begin)),code="Invalid Session")
                     break
                 if msg['base_resp']['ret'] != 0:
+                    logger.warning(f"公众号[{Mps_title}]第{i+1}页请求失败: {msg['base_resp'].get('err_msg')} (ret={msg['base_resp'].get('ret')})")
                     super().Error("错误原因:{}:代码:{}".format(msg['base_resp']['err_msg'],msg['base_resp']['ret']),code="Invalid Session")
-                    break    
+                    break
                 # 如果返回的内容中为空则结束
                 if 'publish_page' not in msg:
+                    logger.warning(f"公众号[{Mps_title}]第{i+1}页返回中没有 publish_page 数据，停止抓取: {str(msg)[:200]}")
                     super().Error("all ariticle parsed")
                     break
                 if msg['base_resp']['ret'] != 0:
@@ -186,7 +216,12 @@ class MpsAppMsg(WxGather):
                     break  
                 if "publish_page" in msg:
                     msg["publish_page"]=json.loads(msg['publish_page'])
-                    for item in msg["publish_page"]['publish_list']:
+                    publish_list = msg["publish_page"].get('publish_list') or []
+                    if not publish_list:
+                        # 已经翻到最后一页，没有更多文章了
+                        print_info(f"公众号[{Mps_title}]文章列表已抓取完毕（第{i+1}页起无更多数据），停止抓取")
+                        break
+                    for item in publish_list:
                         if "publish_info" in item:
                             publish_info= json.loads(item['publish_info'])
                        
@@ -208,11 +243,13 @@ class MpsAppMsg(WxGather):
                                             DB = db.Db(tag="文章检查")
                                             db_session = DB.get_session()
                                             existing_article = db_session.query(Article).filter(Article.id == full_article_id).first()
-                                            if existing_article and existing_article.content and len(existing_article.content.strip()) > 0:
-                                                # 文章已存在且有完整内容，跳过处理
+                                            if existing_article is not None:
+                                                # 文章已存在（无论内容是否完整）即视为已同步：
+                                                # add_article 会按ID跳过重复，重复处理无意义；
+                                                # 内容补抓由 fetch_no_article 任务专门负责
                                                 article_exists = True
                                                 consecutive_existing_count += 1
-                                                print_info(f"文章已存在且有完整内容，跳过处理: {full_article_id} (连续第{consecutive_existing_count}篇)")
+                                                print_info(f"文章已存在，跳过处理: {full_article_id} (连续第{consecutive_existing_count}篇)")
                                                 # 如果连续遇到多篇已存在的文章，停止处理当前公众号
                                                 if consecutive_existing_count >= max_consecutive_existing:
                                                     print_info(f"连续遇到{consecutive_existing_count}篇已存在文章，停止处理当前公众号: {Mps_title}")
@@ -277,14 +314,14 @@ class MpsAppMsg(WxGather):
                     if should_stop_by_date:
                         if found_start_date_article or consecutive_existing_count >= max_consecutive_existing:
                             break
-                    print(f"第{i+1}页爬取成功\n")
+                    logger.info(f"第{i+1}页爬取成功")
                 # 翻页
                 i += 1
             except requests.exceptions.Timeout:
-                print("Request timed out")
+                logger.error("Request timed out")
                 break
             except requests.exceptions.RequestException as e:
-                print(f"Request error: {e}")
+                logger.error(f"Request error: {e}")
                 break
             finally:
                 super().Item_Over(item={"mps_id":Mps_id,"mps_title":Mps_title},CallBack=Item_Over_CallBack)
