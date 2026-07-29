@@ -88,12 +88,17 @@ open_frontend_dev_url() {
 ensure_playwright_browser() {
     local venv_dir="$1"
     local browser_name="${BROWSER_TYPE:-firefox}"
+    local playwright_browser="$browser_name"
 
     case "$browser_name" in
         firefox|chromium|webkit)
             ;;
+        edge)
+            # 运行时沿用项目现有语义：edge 由 Playwright Chromium 驱动承载。
+            playwright_browser="chromium"
+            ;;
         *)
-            echo -e "${RED}❌ BROWSER_TYPE 仅支持 firefox、chromium 或 webkit，当前值: ${browser_name}${NC}"
+            echo -e "${RED}❌ BROWSER_TYPE 仅支持 firefox、chromium、edge 或 webkit，当前值: ${browser_name}${NC}"
             return 1
             ;;
     esac
@@ -101,7 +106,7 @@ ensure_playwright_browser() {
     export BROWSER_TYPE="$browser_name"
 
     local browser_path
-    browser_path="$("$venv_dir/bin/python" - "$browser_name" <<'PYTHON_SCRIPT'
+    browser_path="$("$venv_dir/bin/python" - "$playwright_browser" <<'PYTHON_SCRIPT'
 import sys
 from playwright.sync_api import sync_playwright
 
@@ -116,9 +121,9 @@ PYTHON_SCRIPT
     fi
 
     echo -e "${YELLOW}🌐 当前 Playwright 版本缺少 ${browser_name} 浏览器，正在安装...${NC}"
-    "$venv_dir/bin/python" -m playwright install "$browser_name"
+    "$venv_dir/bin/python" -m playwright install "$playwright_browser"
 
-    browser_path="$("$venv_dir/bin/python" - "$browser_name" <<'PYTHON_SCRIPT'
+    browser_path="$("$venv_dir/bin/python" - "$playwright_browser" <<'PYTHON_SCRIPT'
 import sys
 from playwright.sync_api import sync_playwright
 
