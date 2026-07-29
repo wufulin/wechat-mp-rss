@@ -29,9 +29,10 @@ def auth():
 # 配置关闭时完全不启动调度；缺省默认开启（每小时用已保存凭证免扫码续期）
 if auth_cron_enabled():
     auth_task=TaskScheduler()
-    if os.getenv('DEBUG',False):
-        auth_task.add_cron_job(auth, "*/1 * * * *",tag="授权定时更新")
-    else:
-        auth_task.add_cron_job(auth, "0 */1 * * *",tag="授权定时更新")
+    # 续期频率：默认每2小时一次（凭证有效期约数天，无需更高频率）。
+    # 可用 config.yaml 的 server.auth_cron_exp 或环境变量 WERSS_AUTH_CRON_EXP 覆盖。
+    # 注意：过频的续期请求容易触发微信平台限流（freq control, ret=200013）
+    cron_exp = (os.getenv("WERSS_AUTH_CRON_EXP") or str(cfg.get("server.auth_cron_exp", "0 */2 * * *"))).strip()
+    auth_task.add_cron_job(auth, cron_exp, tag="授权定时更新")
     auth_task.start()
-    print_info("免扫码自动续期定时任务已启动（server.auth_cron）")
+    print_info(f"免扫码自动续期定时任务已启动（server.auth_cron, cron: {cron_exp}）")
