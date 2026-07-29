@@ -1,42 +1,47 @@
 name: PR Checks
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: pr-checks-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   backend:
     name: Backend tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v9
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements.txt
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+      - name: Sync locked dependencies
+        run: uv sync --locked
 
       - name: Run backend regression tests
-        run: python -m unittest discover -s tests -v
+        run: uv run --locked python -m unittest discover -s tests -v
 
       - name: Check Python compilation
-        run: python -m compileall -q apis driver
+        run: >-
+          uv run --locked python -m compileall -q
+          apis core driver jobs schemas tools qtserver main.py web.py
 
       - name: Check development startup script
         run: bash -n start_dev.sh
@@ -44,19 +49,20 @@ jobs:
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.9
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20.18.3"
+          node-version: "24.8.0"
           cache: pnpm
           cache-dependency-path: web_ui/pnpm-lock.yaml
 
@@ -67,3 +73,32 @@ jobs:
       - name: Build frontend
         working-directory: web_ui
         run: pnpm build
+
+  docs:
+    name: Docs checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.8.0"
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Install docs dependencies
+        working-directory: docs-site
+        run: npm ci
+
+      - name: Validate docs
+        working-directory: docs-site
+        run: npm run check:docs
+
+      - name: Build docs site
+        working-directory: docs-site
+        env:
+          VITE_BASE_PATH: /werss/
+        run: npm run build
