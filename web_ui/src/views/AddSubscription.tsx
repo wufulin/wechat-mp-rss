@@ -81,20 +81,26 @@ const AddSubscription: React.FC = () => {
         form.setValue('description', info.mp_name || '')
         form.setValue('wx_id', info.biz || '')
         form.setValue('avatar', info.logo || '')
+        setModalVisible(false)
+        return true
       }
-    } catch (error) {
+      throw new Error(t('subscriptions.messages.getMpInfoFailed'))
+    } catch (error: any) {
       console.error('获取公众号信息失败:', error)
+      const errorMessage =
+        error?.response?.data?.detail?.message ||
+        error?.response?.data?.message ||
+        (typeof error === 'string' ? error : error?.message) ||
+        t('subscriptions.messages.getMpInfoFailed')
       toast({
         variant: "destructive",
         title: t('common.error'),
-        description: t('subscriptions.messages.getMpInfoFailed')
+        description: errorMessage
       })
       return false
     } finally {
       setIsFetching(false)
     }
-    setModalVisible(false)
-    return true
   }
 
   const handleSelect = (item: any) => {
