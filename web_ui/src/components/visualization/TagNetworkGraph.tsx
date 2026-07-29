@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Download, Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
-import type { VisualizationData, NetworkGraphProps, VisualizationNode } from '@/types/visualization'
+import type { NetworkGraphProps, VisualizationNode } from '@/types/visualization'
 
 const VIEWBOX_WIDTH = 800
 const VIEWBOX_HEIGHT = 600

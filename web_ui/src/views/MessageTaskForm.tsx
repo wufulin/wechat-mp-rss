@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { RadioGroup, Radio } from '@/components/ui/radio-group-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/extensions/page-header'
@@ -269,7 +268,7 @@ const MessageTaskForm: React.FC = () => {
           <FormField
             control={form.control}
             name="cron_exp"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <FormLabel>cron表达式 <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
@@ -291,7 +290,7 @@ const MessageTaskForm: React.FC = () => {
           <FormField
             control={form.control}
             name="mps_id"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <FormLabel>公众号</FormLabel>
                 <FormControl>

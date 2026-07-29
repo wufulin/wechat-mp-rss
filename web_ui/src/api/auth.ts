@@ -51,37 +51,49 @@ export function resolveQrCodeImageUrl(code: string | null | undefined): string {
   return trimmed
 }
 
+interface QRCodeResult {
+  code?: string
+  msg?: string
+  is_exists?: boolean
+}
+
 export const QRCode = () => {
-  return http.get('/wx/auth/qr/code').then((res: { code?: string; msg?: string; is_exists?: boolean }) => {
+  return http.get<QRCodeResult>('/wx/auth/qr/code').then((res) => {
     const url = resolveQrCodeImageUrl(res?.code)
     if (!url) {
-      return Promise.reject(new Error((res as { msg?: string })?.msg || '获取二维码失败'))
+      return Promise.reject(new Error(res?.msg || '获取二维码失败'))
     }
     return { ...res, code: url }
   })
 }
-let interval_status_Id:number=0
+
+interface QRCodeStatusResult {
+  login_status?: boolean
+}
+
+let intervalStatusId: ReturnType<typeof setInterval> | undefined
+
 export const stopQRCodeStatusCheck = () => {
-  if (interval_status_Id) {
-    clearInterval(interval_status_Id)
-    interval_status_Id = 0
+  if (intervalStatusId !== undefined) {
+    clearInterval(intervalStatusId)
+    intervalStatusId = undefined
   }
 }
+
 export const checkQRCodeStatus = () => {
-  return new Promise((resolve, reject) => {
-     stopQRCodeStatusCheck()
-      interval_status_Id = setInterval(() => {
-        http.get('/wx/auth/qr/status').then(response => {
-          if(response?.login_status){
-            Message.success("授权成功")
-            stopQRCodeStatusCheck()
-            resolve(response)
-          }
-        }).catch(err => {
-          // clearInterval(intervalId)
-          // reject(err)
-        })
-      }, 3000)
+  return new Promise<QRCodeStatusResult>((resolve) => {
+    stopQRCodeStatusCheck()
+    intervalStatusId = setInterval(() => {
+      http.get<QRCodeStatusResult>('/wx/auth/qr/status').then(response => {
+        if (response?.login_status) {
+          Message.success("授权成功")
+          stopQRCodeStatusCheck()
+          resolve(response)
+        }
+      }).catch(() => {
+        // Polling tolerates transient failures and retries on the next interval.
+      })
+    }, 3000)
   })
 }
 export const refreshToken = () => {

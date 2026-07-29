@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 
@@ -38,9 +38,6 @@ const ResponsiveTable: React.FC<ResponsiveTableProps> = ({
   onPageChange,
   children
 }) => {
-  const width = typeof window !== 'undefined' ? window.innerWidth : 1024
-  const isMobile = useMemo(() => width < 768, [width])
-
   const getRowKey = (record: any, index: number): string | number => {
     if (typeof rowKey === 'function') {
       return rowKey(record)

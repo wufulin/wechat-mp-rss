@@ -33,9 +33,11 @@ export interface AddSubscriptionParams {
 }
 
 export interface MpItem {
+  id?: string
   mp_id: string
   mp_name: string
   avatar: string
+  mp_cover?: string
 }
 
 export interface MpSearchResult {

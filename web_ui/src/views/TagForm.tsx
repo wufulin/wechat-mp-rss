@@ -15,7 +15,12 @@ import { getTag, createTag, updateTag } from '@/api/tagManagement'
 import type { TagCreate } from '@/types/tagManagement'
 import { uploadFile } from '@/api/file'
 import MpMultiSelect from '@/components/MpMultiSelect'
+import type { MpItem } from '@/api/subscription'
 import { Image, Edit, ArrowLeft } from 'lucide-react'
+
+type TagFormValues = Omit<TagCreate, 'mps_id'> & {
+  mps_id: MpItem[]
+}
 
 const TagForm: React.FC = () => {
   const { t } = useTranslation()
@@ -25,7 +30,7 @@ const TagForm: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
   const [showMpSelector, setShowMpSelector] = useState(false)
-  const form = useForm<TagCreate & { mps_id: any[] }>({
+  const form = useForm<TagFormValues>({
     defaultValues: {
       name: '',
       cover: '',
@@ -88,10 +93,10 @@ const TagForm: React.FC = () => {
     img.src = '/default-cover.png'
   }
 
-  const handleSubmit = async (values: TagCreate & { mps_id: any[] }) => {
+  const handleSubmit = async (values: TagFormValues) => {
     try {
       setFormLoading(true)
-      const submitData = {
+      const submitData: TagCreate = {
         ...values,
         mps_id: JSON.stringify(values.mps_id || [])
       }
@@ -248,7 +253,7 @@ const TagForm: React.FC = () => {
                       <FormLabel>{t('tags.mps')}</FormLabel>
                       <div className="flex gap-2">
                         <Input
-                          value={mpsId.map((mp: any) => mp.id?.toString() || '').join(',')}
+                          value={mpsId.map((mp) => (mp.id || mp.mp_id).toString()).join(',')}
                           placeholder={t('tags.mpsPlaceholder')}
                           readOnly
                           className="flex-1 max-w-[300px]"

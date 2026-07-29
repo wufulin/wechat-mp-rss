@@ -3,7 +3,7 @@
  * 显示节点的详细信息和快捷操作
  */
 
-import React, { useEffect, useRef} from 'react'
+import React, {useRef} from 'react'
 import {useNavigate} from 'react-router-dom'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
 import {Badge} from '@/components/ui/badge'

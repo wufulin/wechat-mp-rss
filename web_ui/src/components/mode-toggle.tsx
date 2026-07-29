@@ -10,7 +10,7 @@ import {
 import { useTheme } from "@/store"
 
 export function ModeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { setTheme } = useTheme()
 
   return (
     <DropdownMenu>

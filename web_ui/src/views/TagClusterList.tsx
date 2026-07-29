@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { rebuildTagClusters, listTagClusters } from '@/api/tagClusters'
 import type { TagClusterListItem } from '@/types/tagCluster'
-import { ArrowRight, Layers3, Loader2, RefreshCw, Search } from 'lucide-react'
+import { ArrowRight, Loader2, RefreshCw, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 const TagClusterList: React.FC = () => {

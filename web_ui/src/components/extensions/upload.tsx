@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 interface UploadProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  customRequest?: (fileList: File[]) => void | Promise<void>
+  customRequest?: (fileList: File[]) => boolean | void | Promise<boolean | void>
   fileList?: any[]
   showUploadList?: boolean
   accept?: string
@@ -18,8 +18,8 @@ const Upload = React.forwardRef<HTMLInputElement, UploadProps>(
   ({ 
     className, 
     customRequest, 
-    fileList = [], 
-    showUploadList = true,
+    fileList: _fileList = [],
+    showUploadList: _showUploadList = true,
     accept,
     limit,
     children,
@@ -27,7 +27,7 @@ const Upload = React.forwardRef<HTMLInputElement, UploadProps>(
     ...props 
   }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null)
-    const [internalFileList, setInternalFileList] = React.useState<File[]>([])
+    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement)
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || [])
@@ -45,8 +45,6 @@ const Upload = React.forwardRef<HTMLInputElement, UploadProps>(
           return
         }
       }
-      
-      setInternalFileList(files)
       
       // Reset input
       if (inputRef.current) {

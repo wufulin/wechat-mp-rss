@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vite --port 5174",
+    "typecheck": "tsc --noEmit",
     "build": "vite build --mode production",
     "build:deploy": "vite build --mode production && tsx scripts/copy-build.ts",
     "preview": "vite preview",

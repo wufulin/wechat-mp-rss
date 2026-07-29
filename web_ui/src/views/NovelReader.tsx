@@ -15,10 +15,10 @@ const NovelReader: React.FC = () => {
     { id: 2, title: '第二章' }
   ])
   const [currentContent] = useState('这里是小说正文内容...')
-  const [isReading, setIsReading] = useState(false)
+  const [isReading] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [hasError, setHasError] = useState(false)
+  const [hasError] = useState(false)
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
