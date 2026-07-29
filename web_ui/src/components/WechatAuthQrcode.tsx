@@ -1,10 +1,10 @@
-import { useState, useImperativeHandle, forwardRef } from 'react'
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import { QRCode, checkQRCodeStatus } from '@/api/auth'
+import { QRCode, checkQRCodeStatus, stopQRCodeStatusCheck } from '@/api/auth'
 
 interface WechatAuthQrcodeProps {
   onSuccess?: (data: any) => void
@@ -57,12 +57,23 @@ const WechatAuthQrcode = forwardRef<WechatAuthQrcodeRef, WechatAuthQrcodeProps>(
     }
   }
 
+  // 弹窗关闭时停止轮询
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (!nextOpen) stopQRCodeStatusCheck()
+  }
+
+  // 组件卸载时兜底清理轮询定时器
+  useEffect(() => {
+    return () => stopQRCodeStatusCheck()
+  }, [])
+
   useImperativeHandle(ref, () => ({
     startAuth
   }))
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle>微信授权</DialogTitle>
