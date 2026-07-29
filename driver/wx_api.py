@@ -765,6 +765,11 @@ class WeChatAPI:
         except Exception as e:
             logger.warning(f"Token 免扫码登录异常，本次续期/切换中止: {e}")
             return None
+        if not username:
+            # 定时续期场景没有切换目标，免扫码重登已完成续期；
+            # 空 username 请求 switchacct 必然返回 200002 invalid args，直接跳过
+            logger.debug("未指定切换目标账号，免扫码重登已完成，跳过 switchacct")
+            return None
         url = f"{self.base_url}/cgi-bin/switchacct?action=switch"
         
         headers = {
