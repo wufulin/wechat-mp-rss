@@ -65,11 +65,7 @@ const BasicLayout: React.FC = () => {
 
   const fetchUserInfo = async () => {
     try {
-      const res = await getUserInfo() as unknown as {
-        username: string
-        nickname?: string
-        avatar: string
-      }
+      const res = await getUserInfo()
       setUserInfo({
         username: res.username || '',
         nickname: res.nickname || res.username || '',

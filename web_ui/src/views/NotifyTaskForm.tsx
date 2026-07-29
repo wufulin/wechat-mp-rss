@@ -56,7 +56,7 @@ const NotifyTaskForm: React.FC = () => {
       ;(async () => {
         setLoading(true)
         try {
-          const res = await getNotifyTask(id) as any
+          const res = await getNotifyTask(id)
           form.reset({
             name: res.name,
             message_type: res.message_type,

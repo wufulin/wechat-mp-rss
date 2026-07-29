@@ -69,7 +69,20 @@ interface HttpClient {
   patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
 }
 
-// The response interceptor unwraps AxiosResponse and returns the API payload.
-const http = axiosInstance as HttpClient
+// Each method declares the interceptor's post-transform return type explicitly.
+// The first Axios generic describes the wire payload; the second is the value
+// returned after the response interceptor unwraps AxiosResponse.
+const http: HttpClient = {
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.get<unknown, T>(url, config),
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.delete<unknown, T>(url, config),
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.post<unknown, T, unknown>(url, data, config),
+  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.put<unknown, T, unknown>(url, data, config),
+  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> =>
+    axiosInstance.patch<unknown, T, unknown>(url, data, config),
+}
 
 export default http

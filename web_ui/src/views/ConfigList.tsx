@@ -45,9 +45,9 @@ const ConfigList: React.FC = () => {
       const res = await listConfigs({
         page: pagination.current - 1,
         pageSize: pagination.pageSize
-      }) as unknown as { list?: ConfigManagement[]; data?: { list?: ConfigManagement[]; total?: number }; total?: number }
-      setConfigList(res.list || res.data?.list || [])
-      setPagination(prev => ({ ...prev, total: res.total || res.data?.total || 0 }))
+      })
+      setConfigList(res.list)
+      setPagination(prev => ({ ...prev, total: res.total }))
       setError('')
     } catch (err: any) {
       setError(err instanceof Error ? err.message : '获取配置列表失败')

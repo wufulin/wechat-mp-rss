@@ -32,8 +32,6 @@ import {
 import type {
   ApiKey,
   ApiKeyLog,
-  ApiKeyListResponse,
-  ApiKeyLogListResponse,
   CreateApiKeyParams,
   UpdateApiKeyParams
 } from '@/types/apiKey'
@@ -122,7 +120,7 @@ const ApiKeyManagement: React.FC = () => {
       const res = await getApiKeys({
         page: pagination.current,
         pageSize: pagination.pageSize
-      }) as unknown as ApiKeyListResponse
+      })
 
       const list = res.list || []
       const total = res.total || 0
@@ -165,7 +163,7 @@ const ApiKeyManagement: React.FC = () => {
       const res = await getApiKeyLogs(apiKeyId, {
         page: logsPagination.current,
         pageSize: logsPagination.pageSize
-      }) as unknown as ApiKeyLogListResponse
+      })
 
       const list = res.list || []
       const total = res.total || 0
@@ -226,8 +224,8 @@ const ApiKeyManagement: React.FC = () => {
         Message.success(t('apiKeys.messages.updateSuccess'))
       } else {
         const res = await createApiKey(submitData)
-        const newKey = (res as any)?.data?.key || (res as any)?.key
-        const newKeyId = (res as any)?.data?.id || (res as any)?.id
+        const newKey = res.key
+        const newKeyId = res.id
         if (newKey && newKeyId) {
           setNewApiKey(newKey)
           setNewApiKeyId(newKeyId)
@@ -282,7 +280,7 @@ const ApiKeyManagement: React.FC = () => {
   const handleRegenerate = async (id: string) => {
     try {
       const res = await regenerateApiKey(id)
-      const newKey = (res as any)?.data?.key || (res as any)?.key
+      const newKey = res.key
       if (newKey) {
         setNewApiKey(newKey)
         setNewApiKeyId(id)

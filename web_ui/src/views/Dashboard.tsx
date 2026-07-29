@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense, ErrorInfo, Component } from
 import { useTranslation } from 'react-i18next'
 import { getDashboardStats, type DashboardData, type SourceStats, type KeywordStats, type TrendData, type KeywordTrendData } from '@/api/dashboard'
 import { getArticles, type Article } from '@/api/article'
-import { getSubscriptions, type Subscription } from '@/api/subscription'
+import { getSubscriptions } from '@/api/subscription'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Statistic } from '@/components/extensions/statistic'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -103,27 +103,14 @@ const Dashboard: React.FC = () => {
       setError('')
       
       try {
-        const res = await getDashboardStats()
-        if (res && (res as any).data) {
-          const responseData = (res as any).data
-          if (responseData.code === 0 || responseData.code === 200) {
-            setDashboardData(responseData.data)
-            return
-          } else {
-            const errorMsg = responseData.message || responseData.msg || '未知错误'
-            console.error('Dashboard API 返回错误:', responseData.code, errorMsg)
-            // 降级处理
-            await calculateStatsFromAPIs()
-            return
-          }
-        }
+        const data = await getDashboardStats()
+        setDashboardData(data)
+        return
       } catch (apiError: any) {
         console.warn('Dashboard API 调用失败，使用回退计算:', apiError)
         await calculateStatsFromAPIs()
         return
       }
-      
-      await calculateStatsFromAPIs()
     } catch (err: any) {
       console.error('获取统计数据失败:', err)
       setError(t('dashboard.errors.fetchFailed', { message: err?.message || t('dashboard.errors.unknownError') }))
@@ -136,12 +123,11 @@ const Dashboard: React.FC = () => {
   const calculateStatsFromAPIs = async () => {
     try {
       const articlesRes = await getArticles({ page: 0, pageSize: 100 })
-      const articles: Article[] = (articlesRes as any)?.list || (articlesRes as any)?.data?.list || []
-      const totalArticles = (articlesRes as any)?.total || (articlesRes as any)?.data?.total || articles.length
+      const articles: Article[] = articlesRes.list
+      const totalArticles = articlesRes.total
 
       const subscriptionsRes = await getSubscriptions({ page: 0, pageSize: 100 })
-      const subscriptions: Subscription[] = (subscriptionsRes as any)?.list || (subscriptionsRes as any)?.data?.list || []
-      const totalSources = (subscriptionsRes as any)?.total || (subscriptionsRes as any)?.data?.total || subscriptions.length
+      const totalSources = subscriptionsRes.total
 
       const now = new Date()
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -338,7 +324,7 @@ const Dashboard: React.FC = () => {
           topKeywords,
           usingFallback
         }
-      } as any)
+      })
     } catch (err) {
       console.error('计算统计数据失败:', err)
       throw err
@@ -657,7 +643,7 @@ const Dashboard: React.FC = () => {
   }
 
   // 从元数据中获取 topKeywords，如果没有则使用全局统计的前10个作为备选
-  const meta = (dashboardData as any)?._meta
+  const meta = dashboardData?._meta
   const topKeywords = meta?.topKeywords || keywordStats.slice(0, 10).map(k => k.keyword)
 
   // 根据选择的时间范围过滤趋势数据
@@ -795,7 +781,7 @@ const Dashboard: React.FC = () => {
                       )
                       
                       // 获取元数据（如果存在）
-                      const meta = (dashboardData as any)?._meta
+                      const meta = dashboardData?._meta
                       const usingFallback = meta?.usingFallback || false
                       
                       // 如果使用了备选关键词且没有实际数据，仍然显示图表（即使数据为0）

@@ -76,10 +76,8 @@ export interface ArticleListParams {
  * @property total 总数
  */
 export interface ArticleListResult {
-  code?: number
-  list?: Article[]
-  total?: number
-  data?: Article[]
+  list: Article[]
+  total: number
 }
 
 /**
@@ -124,13 +122,12 @@ export const getArticles = (params: ArticleListParams) => {
 export const getArticleDetail = (id: number,action_type:number) => {
   switch(action_type){
     case -1:
-      return http.get<{code: number, data: Article}>(`/wx/articles/${id}/prev`)
+      return http.get<Article>(`/wx/articles/${id}/prev`)
     case 1:
-      return http.get<{code: number, data: Article}>(`/wx/articles/${id}/next`)
+      return http.get<Article>(`/wx/articles/${id}/next`)
     default:
       // 默认获取当前文章详情
-      return http.get<{code: number, data: Article}>(`/wx/articles/${id}`)
-      break
+      return http.get<Article>(`/wx/articles/${id}`)
   }
 }
 
@@ -140,7 +137,7 @@ export const getArticleDetail = (id: number,action_type:number) => {
  * @returns 上一篇文章详情结果
  */
 export const getPrevArticleDetail = (id: number) => {
-  return http.get<{code: number, data: Article}>(`/wx/articles/${id}/prev`)
+  return http.get<Article>(`/wx/articles/${id}/prev`)
 }
 
 /**
@@ -149,7 +146,7 @@ export const getPrevArticleDetail = (id: number) => {
  * @returns 下一篇文章详情结果
  */
 export const getNextArticleDetail = (id: number) => {
-  return http.get<{code: number, data: Article}>(`/wx/articles/${id}/next`)
+  return http.get<Article>(`/wx/articles/${id}/next`)
 }
 
 /**
@@ -183,7 +180,7 @@ export const ClearDuplicateArticle = () => {
  * @returns 获取结果
  */
 export const fetchArticleContent = (id: number | string) => {
-  return http.post<{code: number, message: string, data?: {content_length: number}}>(`/wx/articles/${id}/fetch_content`)
+  return http.post<{content_length: number}>(`/wx/articles/${id}/fetch_content`)
 }
 
 /**
@@ -227,22 +224,22 @@ export interface ArticleAiFilterAnalyzeResult {
 }
 
 export const analyzeArticleAiFilter = (article_ids: Array<string | number>) => {
-  return http.post<{ code: number; data: ArticleAiFilterAnalyzeResult; message?: string }>('/wx/articles/ai-filter/analyze', {
+  return http.post<ArticleAiFilterAnalyzeResult>('/wx/articles/ai-filter/analyze', {
     article_ids: article_ids.map((id) => String(id))
   })
 }
 
 export const getUnfilteredArticleIds = () => {
-  return http.get<{ code: number; data: { ids: string[]; total: number } }>('/wx/articles/ai-filter/unfiltered-ids')
+  return http.get<{ ids: string[]; total: number }>('/wx/articles/ai-filter/unfiltered-ids')
 }
 
 /** 全库未删除文章 ID（与后端 analyze __all__ 范围一致），用于前端分批过滤并展示进度 */
 export const getAllArticleIdsForAiFilter = () => {
-  return http.get<{ code: number; data: { ids: string[]; total: number } }>('/wx/articles/ai-filter/all-ids')
+  return http.get<{ ids: string[]; total: number }>('/wx/articles/ai-filter/all-ids')
 }
 
 export const restoreArticleAiFilter = (article_ids: Array<string | number>) => {
-  return http.post<{ code: number; data: { restored?: number }; message?: string }>('/wx/articles/ai-filter/restore', {
+  return http.post<{ restored?: number }>('/wx/articles/ai-filter/restore', {
     article_ids: article_ids.map((id) => String(id))
   })
 }

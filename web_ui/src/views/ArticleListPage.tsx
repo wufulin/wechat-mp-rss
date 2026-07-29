@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/use-toast'
 import {
   getArticles,
   deleteArticle as deleteArticleApi,
-  ArticleListResult,
   Article,
   getArticleDetail,
   updateArticle,
@@ -25,9 +24,8 @@ import {
   restoreArticleAiFilter,
   getUnfilteredArticleIds,
   getAllArticleIdsForAiFilter,
-  ArticleAiFilterAnalyzeResult,
 } from '@/api/article'
-import { getSubscriptions, SubscriptionListResult } from '@/api/subscription'
+import { getSubscriptions } from '@/api/subscription'
 import { formatDateTime } from '@/utils/date'
 import dayjs from 'dayjs'
 import ExportModal from '@/components/ExportModal'
@@ -117,8 +115,8 @@ const ArticleListPage: React.FC = () => {
 
   const loadMpList = async () => {
     try {
-      const res = await getSubscriptions({ page: 0, pageSize: 100 }) as unknown as SubscriptionListResult
-      const list = res.list || res.data?.list || []
+      const res = await getSubscriptions({ page: 0, pageSize: 100 })
+      const list = res.list
       setMpList(list.map(item => ({ mp_id: item.mp_id, mp_name: item.mp_name || item.mp_id })))
     } catch (error) {
       console.error(t('subscriptions.messages.fetchFailed'), error)
@@ -133,14 +131,9 @@ const ArticleListPage: React.FC = () => {
         pageSize: pagination.pageSize,
         search: searchText,
         mp_id: mpId || undefined
-      }) as unknown as ArticleListResult
-      let list: Article[] = []
-      let total = 0
-      if (Array.isArray(res)) { list = res; total = res.length }
-      else if (res && typeof res === 'object') {
-        list = (res as any)?.list || (res as any)?.data?.list || []
-        total = (res as any)?.total || (res as any)?.data?.total || 0
-      }
+      })
+      const list = res.list
+      const total = res.total
       const visibleList = hideAiFiltered ? list.filter(item => item.ai_filter_status !== 'hide') : list
       setArticles(visibleList)
       setPagination(prev => ({ ...prev, total }))
@@ -241,8 +234,7 @@ const ArticleListPage: React.FC = () => {
 
       try {
         const res = await analyzeArticleAiFilter(batchIds)
-        const data = (res as any)?.data || res
-        const summary = (data as ArticleAiFilterAnalyzeResult)?.summary || {}
+        const summary = res.summary || {}
 
         task = {
           ...task,
@@ -297,7 +289,7 @@ const ArticleListPage: React.FC = () => {
     setArticleDetailLoading(true)
     try {
       const res = await getArticleDetail(article.id, actionType)
-      const articleData = (res as any)?.data || res
+      const articleData = res
       if (articleData) {
         setCurrentArticle({
           ...article,
@@ -325,8 +317,7 @@ const ArticleListPage: React.FC = () => {
     const art = currentArticleRef.current
     setArticleDetailLoading(true)
     try {
-      const res = await getArticleDetail(art.id as any, 0)
-      const articleData = (res as any)?.data || res
+      const articleData = await getArticleDetail(art.id, 0)
       if (articleData) {
         setCurrentArticle({
           ...art,
@@ -391,10 +382,9 @@ const ArticleListPage: React.FC = () => {
       setTagExtracting(true)
       setMissingTagJob(null)
       try {
-        const res = await startMissingTagsJob() as any
-        const data = res?.data ?? res
-        if (!data?.job_id) {
-          toast({ title: t('common.success'), description: data?.message || t('common.noData') })
+        const data = await startMissingTagsJob()
+        if (!data.job_id) {
+          toast({ title: t('common.success'), description: t('common.noData') })
           setTagExtractOpen(false)
           setTagExtractKind(null)
           return
@@ -413,8 +403,7 @@ const ArticleListPage: React.FC = () => {
           if (missingPollAbortRef.current) break
           await new Promise((r) => setTimeout(r, 1200))
           if (missingPollAbortRef.current) break
-          const st = (await getMissingTagsJobStatus(data.job_id)) as any
-          const d = st?.data ?? st
+          const d = await getMissingTagsJobStatus(data.job_id)
           setMissingTagJob({
             job_id: data.job_id,
             total: Number(d.total) ?? total,
@@ -461,9 +450,8 @@ const ArticleListPage: React.FC = () => {
       else if (tagExtractKind === 'selected') payload = selectedRowKeys.map(String)
       else payload = articles.map(a => String(a.id))
 
-      const res = await reExtractTags(payload)
-      const data = (res as any)?.data || res
-      toast({ title: t('common.success'), description: data?.message || t('articles.tagExtract.success') })
+      await reExtractTags(payload)
+      toast({ title: t('common.success'), description: t('articles.tagExtract.success') })
       await loadArticles()
       await refreshOpenArticleDetail()
       if (tagExtractKind === 'selected') setSelectedRowKeys([])
@@ -510,9 +498,8 @@ const ArticleListPage: React.FC = () => {
     }
     setAiFiltering(true)
     try {
-      const res = (await getAllArticleIdsForAiFilter()) as any
-      const data = res?.data ?? res
-      const ids: string[] = Array.isArray(data?.ids) ? data.ids.map(String) : []
+      const data = await getAllArticleIdsForAiFilter()
+      const ids = data.ids.map(String)
       if (ids.length === 0) {
         toast({ title: t('common.success'), description: '没有需要过滤的文章' })
         return
@@ -540,9 +527,8 @@ const ArticleListPage: React.FC = () => {
     if (scope === 'unfiltered') {
       setAiFiltering(true)
       try {
-        const res = await getUnfilteredArticleIds() as any
-        const data = res?.data || res
-        const ids: string[] = data?.ids || []
+        const data = await getUnfilteredArticleIds()
+        const ids = data.ids
         if (ids.length === 0) {
           toast({ title: t('common.success'), description: '没有未过滤的文章' })
           setAiFiltering(false)

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Plus, Edit, Trash2, RefreshCw, Search, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { getSubscriptions, deleteSubscription, updateSubscription, SubscriptionListResult, Subscription, UpdateMps } from '@/api/subscription'
+import { getSubscriptions, deleteSubscription, updateSubscription, Subscription, UpdateMps } from '@/api/subscription'
 import { formatDateTime, formatTimestamp } from '@/utils/date'
 import { Avatar as AvatarUtil } from '@/utils/constants'
 import dayjs from 'dayjs'
@@ -65,10 +65,10 @@ const SubscriptionManagement: React.FC = () => {
         page: pagination.current - 1,
         pageSize: pagination.pageSize,
         kw: searchText
-      }) as unknown as SubscriptionListResult
+      })
 
-      const list = res.list || res.data?.list || []
-      const total = res.total || res.data?.total || 0
+      const list = res.list
+      const total = res.total
 
       setSubscriptions(list)
       setPagination(prev => ({ ...prev, total }))
@@ -173,7 +173,9 @@ const SubscriptionManagement: React.FC = () => {
   // 编辑订阅
   const handleEdit = (subscription: Subscription) => {
     form.reset({
-      ...subscription,
+      mp_id: subscription.mp_id,
+      mp_name: subscription.mp_name,
+      mp_intro: subscription.mp_intro || '',
       status: subscription.status === 1
     })
     setVisible(true)

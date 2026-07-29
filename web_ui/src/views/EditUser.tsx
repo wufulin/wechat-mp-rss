@@ -34,8 +34,7 @@ const EditUser: React.FC = () => {
   const fetchUserInfo = async () => {
     setLoading(true)
     try {
-      const res = await getUserInfo()
-      const userData = (res as any).data || res
+      const userData = await getUserInfo()
       setUsername(userData.username || '')
       form.reset({
         nickname: userData.nickname || userData.username,
@@ -76,8 +75,7 @@ const EditUser: React.FC = () => {
 
     try {
       const res = await uploadAvatar(file)
-      const avatarUrl = (res as any).url || (res as any).avatar || (res as any).data?.avatar
-      form.setValue('avatar', avatarUrl)
+      form.setValue('avatar', res.avatar)
     } catch (error: any) {
       console.error('上传错误:', error)
       toast({
@@ -98,10 +96,10 @@ const EditUser: React.FC = () => {
     setLoading(true)
     try {
       const response = await updateUserInfo(values)
-      if ((response as any).code === 0) {
+      if (response.code === 0) {
         toast({
           title: "成功",
-          description: (response as any)?.message || '更新成功'
+          description: response.message || '更新成功'
         })
       }
     } catch (error) {

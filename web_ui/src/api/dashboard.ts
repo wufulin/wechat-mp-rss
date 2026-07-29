@@ -53,12 +53,15 @@ export interface DashboardData {
   keywordStats: KeywordStats[]
   trendData: TrendData[]
   keywordTrendData?: KeywordTrendData[]
+  _meta?: {
+    topKeywords: string[]
+    usingFallback: boolean
+  }
 }
 
 /**
  * 获取 Dashboard 统计数据
  */
 export const getDashboardStats = () => {
-  return http.get<{ code: number; data: DashboardData }>('/wx/dashboard/stats')
+  return http.get<DashboardData>('/wx/dashboard/stats')
 }
-

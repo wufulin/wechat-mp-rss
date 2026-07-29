@@ -54,8 +54,8 @@ const AddSubscription: React.FC = () => {
       const res = await searchBiz(value, {
         page: 0,
         pageSize: 10
-      }) as unknown as { list?: any[]; data?: { list?: any[] } }
-      setSearchResults(res.list || res.data?.list || [])
+      })
+      setSearchResults(res.list)
     } catch (error) {
       setSearchResults([])
     }
@@ -73,9 +73,9 @@ const AddSubscription: React.FC = () => {
     }
     setIsFetching(true)
     try {
-      const res = await getSubscriptionInfo(articleLink.trim()) as unknown as { mp_info?: any; data?: { mp_info?: any } }
+      const res = await getSubscriptionInfo(articleLink.trim())
       console.log('获取公众号信息:', res)
-      const info = res?.mp_info || res?.data?.mp_info || false
+      const info = res.mp_info
       if (info) {
         form.setValue('name', info.mp_name || '')
         form.setValue('description', info.mp_name || '')
@@ -155,10 +155,8 @@ const AddSubscription: React.FC = () => {
   // 导出订阅列表
   const handleExport = async () => {
     try {
-      const response = await ExportMPS()
-      const data = (response as any).data ?? response
-      const blob = data instanceof Blob ? data : new Blob([data], { type: 'text/csv;charset=utf-8' })
-      const url = window.URL.createObjectURL(blob)
+      const data = await ExportMPS()
+      const url = window.URL.createObjectURL(data)
       const a = document.createElement('a')
       a.href = url
       a.download = '公众号列表.csv'
@@ -196,9 +194,9 @@ const AddSubscription: React.FC = () => {
         
         try {
           setLoading(true)
-          const response: any = await ImportMPS(formData)
-          const message = response?.message || response?.data?.message || '导入成功'
-          const stats = response?.data?.stats || response?.stats
+          const response = await ImportMPS(formData)
+          const message = response.message || '导入成功'
+          const stats = response.stats
           
           if (stats) {
             toast({

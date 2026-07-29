@@ -50,8 +50,7 @@ const TagForm: React.FC = () => {
   const fetchTag = async (tagId: string) => {
     try {
       setLoading(true)
-      const res = await getTag(tagId)
-      const data = (res as any).data || res
+      const data = await getTag(tagId)
       form.reset({
         ...data,
         mps_id: JSON.parse(data.mps_id || '[]')
@@ -63,8 +62,8 @@ const TagForm: React.FC = () => {
     }
   }
 
-  const handleUploadChange = async (fileList: any[]): Promise<void> => {
-    const file = fileList[0]?.originFile || fileList[0]?.file
+  const handleUploadChange = async (fileList: File[]): Promise<void> => {
+    const file = fileList[0]
 
     if (!file?.type?.startsWith('image/')) {
       Message.error(t('tags.messages.invalidImageFile'))
@@ -77,9 +76,7 @@ const TagForm: React.FC = () => {
     }
 
     try {
-      const res = await uploadFile(file)
-      console.log(res)
-      const data = (res as any).data || res
+      const data = await uploadFile(file)
       form.setValue('cover', data.url)
     } catch (error: any) {
       console.error('上传错误:', error)
