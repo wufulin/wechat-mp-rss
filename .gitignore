@@ -35,6 +35,9 @@ env/
 # 本地误拷/备份的整仓副本，勿跟踪
 werss-sync/
 
+# pnpm 本地缓存目录，勿提交
+.pnpm-store/
+
 # 旧版 Mac 部署已并入 ../deploy 仓库，本地若仍留备份勿提交
 .env.mac
 feeds_export.json
