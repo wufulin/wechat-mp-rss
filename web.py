@@ -104,6 +104,29 @@ async def lifespan(app: FastAPI):
         if not enable_job_config:
             print_warning("【应用启动】未开启定时任务: server.enable_job 配置为 False")
     
+    # 进程启动时自动恢复微信登录态：存在已保存凭证时在后台线程免扫码续期并恢复心跳
+    # 失败只记日志，不阻塞启动、不触发扫码（失效交由 failauth 兜底链路）
+    try:
+        from driver.auth import auth_cron_enabled
+        if auth_cron_enabled():
+            from driver.token import wx_cfg
+            if wx_cfg.get("token", ""):
+                def _restore_wx_login():
+                    try:
+                        from driver.base import WX_API
+                        if hasattr(WX_API, "login_with_token"):
+                            # requests 方案：用已保存的 token+cookie 免扫码登录
+                            WX_API.login_with_token()
+                        elif hasattr(WX_API, "Token"):
+                            # Playwright 方案：等价的 token 免扫码登录
+                            WX_API.Token()
+                        print_info("【应用启动】已用已保存凭证自动恢复微信登录态")
+                    except Exception as e:
+                        print_warning(f"【应用启动】自动恢复微信登录态失败: {e}")
+                threading.Thread(target=_restore_wx_login, daemon=True, name="微信登录态恢复线程").start()
+    except Exception as e:
+        print_warning(f"【应用启动】微信登录态自动恢复检查失败: {e}")
+    
     yield  # 应用运行期间
     
     # 关闭时执行

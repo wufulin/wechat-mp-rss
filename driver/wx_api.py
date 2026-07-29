@@ -500,6 +500,20 @@ class WeChatAPI:
             logger.error(f"检查登录状态失败: {str(e)}")
             return 'error'
 
+    def _update_expiry_cache(self):
+        """用当前 session cookies 重新计算有效期，回写 wx.lic 的 expiry
+        cookie 里没有 expires 信息时保持原值不动
+        """
+        try:
+            from driver.cookies import expire
+            from .token import wx_cfg
+            expiry = expire(self.get_cookie_expires(self.session.cookies))
+            if expiry:
+                wx_cfg.set("expiry", expiry)
+                logger.debug(f"已回写最新 expiry: {expiry.get('expiry_time')}")
+        except Exception as e:
+            logger.warning(f"回写 expiry 失败: {e}")
+
     def _handle_login_success(self):
         """
         处理登录成功
@@ -516,6 +530,8 @@ class WeChatAPI:
             # 调用成功回调
             if self._get_account_info() is not None:
                 logger.info("登录成功！")
+                # 续期成功后回写最新 expiry，避免 check_session_valid 按旧快照误判过期
+                self._update_expiry_cache()
                 self._start_heartbeat()
                 return True
         except Exception as e:
@@ -535,6 +551,8 @@ class WeChatAPI:
                 result = self._get_account_list()
                 if result and result.get('base_resp', {}).get('ret') == 0:
                     logger.debug("心跳保活成功")
+                    # 心跳成功后回写最新 expiry，保持 wx.lic 有效期快照为最新
+                    self._update_expiry_cache()
                     timer = Timer(heartbeat_interval, heartbeat)
                     timer.daemon = True
                     timer.start()
@@ -739,8 +757,14 @@ class WeChatAPI:
             return None
 
     def switch_account(self,username:str=""):
-        """切换微信公众号账号"""
-        self.login_with_token()
+        """切换微信公众号账号（先尝试 Token 免扫码登录；失败仅记录日志，不发起扫码，交由 failauth 兜底链路处理）"""
+        try:
+            if not self.login_with_token():
+                logger.warning("Token 免扫码登录失败，本次续期/切换中止，等待 failauth 兜底处理")
+                return None
+        except Exception as e:
+            logger.warning(f"Token 免扫码登录异常，本次续期/切换中止: {e}")
+            return None
         url = f"{self.base_url}/cgi-bin/switchacct?action=switch"
         
         headers = {
