@@ -87,11 +87,15 @@ class Wx:
         """
         print("开始切换账号...")
         try:
+            # 定时续期场景：先尝试 Token 免扫码登录；
+            # 失败时只标记失效并记录日志，不主动发起扫码（交由 failauth 兜底链路出码通知），
+            # 显式的用户扫码入口（/qr/code）行为保持不变
             self.Token(isClose=False)
             if self._haslogin is False:
+                print_warning("Token 免扫码登录失败，已标记登录失效，等待 failauth 兜底处理")
+                from driver.success import setStatus
+                setStatus(False)
                 self.Close()
-                self.GetCode(Success)
-                time.sleep(60)
                 return False
             time.sleep(1)
             if not hasattr(self, 'controller') or not self.controller.page:
