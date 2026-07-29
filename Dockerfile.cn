@@ -13,8 +13,8 @@ RUN npm install -g pnpm@11.5.2
 # 配置 pnpm 使用国内镜像源
 RUN pnpm config set registry https://registry.npmmirror.com
 
-# 复制前端依赖文件
-COPY web_ui/package.json web_ui/pnpm-lock.yaml* web_ui/
+# 复制前端依赖与构建脚本授权配置
+COPY web_ui/package.json web_ui/pnpm-lock.yaml* web_ui/pnpm-workspace.yaml web_ui/
 
 # 安装前端依赖
 WORKDIR /app/web_ui
