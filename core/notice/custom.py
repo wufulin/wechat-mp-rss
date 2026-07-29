@@ -1,5 +1,6 @@
 import requests
 import json
+from core.log import logger
 
 
 def send_custom_message(webhook_url, title, text):
@@ -22,6 +23,6 @@ def send_custom_message(webhook_url, title, text):
             headers=headers,
             data=json.dumps(data)
         )
-        print(response.text)
+        logger.debug(f"自定义webhook通知响应: {response.text}")
     except Exception as e:
-        print('自定义webhook通知发送失败', e)
+        logger.error(f"自定义webhook通知发送失败: {e}")

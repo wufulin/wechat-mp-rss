@@ -1,5 +1,6 @@
 import requests
 import json
+from core.log import logger
 def send_dingtalk_message(webhook_url, title, text, is_at_all=False, at_mobiles=[]):
     """
     发送Markdown格式消息
@@ -29,9 +30,9 @@ def send_dingtalk_message(webhook_url, title, text, is_at_all=False, at_mobiles=
             headers=headers,
             data=json.dumps(data)
         )
-        print(response.text)
+        logger.debug(f"钉钉通知响应: {response.text}")
     except Exception as e:
-        print('通知发送失败', e)
+        logger.error(f"钉钉通知发送失败: {e}")
 # 使用示例
 # markdown_text = """### 项目状态报告  
 # - **项目名称**: XX系统升级  
