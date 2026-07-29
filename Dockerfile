@@ -10,8 +10,8 @@ WORKDIR /app
 # 安装与 CI 一致的 pnpm
 RUN npm install -g pnpm@11.5.2
 
-# 复制前端依赖文件
-COPY web_ui/package.json web_ui/pnpm-lock.yaml* web_ui/
+# 复制前端依赖与构建脚本授权配置
+COPY web_ui/package.json web_ui/pnpm-lock.yaml* web_ui/pnpm-workspace.yaml web_ui/
 
 # 安装前端依赖（BuildKit 缓存 pnpm store，加速重复构建）
 WORKDIR /app/web_ui
