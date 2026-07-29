@@ -4,10 +4,11 @@
 
 ## 📋 工作流概览
 
-项目包含以下 6 个自动化工作流：
+项目主要自动化工作流如下：
 
 | 工作流文件 | 功能 | 触发条件 |
 |-----------|------|---------|
+| `pr-checks.yaml` | 运行后端回归检查和前端生产构建 | 向 `main` 提交或更新 Pull Request |
 | `base_os.yaml` | 构建 Python 3.8 基础镜像 | 推送到 main，且 `Dockerfiles/py38/Dockerfile` 变化 |
 | `buidweb.yaml` | 构建并部署前端到 GitHub Pages | 被其他工作流调用 |
 | `docker_hub.yaml` | 构建并推送到 Docker Hub | 推送到 main，且相关文件变化 |
@@ -18,6 +19,21 @@
 ---
 
 ## 🔧 详细配置说明
+
+### pr-checks.yaml - Pull Request 质量检查
+
+**功能：**
+- 在 Python 3.12 上安装后端依赖并运行 `unittest`
+- 检查 Python 文件可编译和 `start_dev.sh` Shell 语法
+- 使用 Node.js 20.18.3 与 pnpm 9.15.9 安装前端依赖并执行生产构建
+
+**触发条件：**
+- 新建、重新打开或更新目标为 `main` 的 Pull Request
+
+**所需 Secrets：**
+- 无，仅需仓库内容读取权限
+
+---
 
 ### 1. base_os.yaml - 基础镜像构建
 
@@ -354,4 +370,3 @@ git push origin v1.0.0
 ---
 
 如有问题或建议，请提交 Issue 或 PR。
-
