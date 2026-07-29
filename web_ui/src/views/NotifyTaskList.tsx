@@ -29,9 +29,9 @@ const NotifyTaskListView: React.FC = () => {
       const res = await listNotifyTasks({
         offset: (pagination.current - 1) * pagination.pageSize,
         limit: pagination.pageSize,
-      }) as any
-      setList(res?.list || [])
-      setPagination(prev => ({ ...prev, total: res?.total || 0 }))
+      })
+      setList(res.list)
+      setPagination(prev => ({ ...prev, total: res.total }))
     } finally {
       setLoading(false)
     }
@@ -45,7 +45,7 @@ const NotifyTaskListView: React.FC = () => {
   const handleReload = async () => {
     try {
       const res = await reloadNotifyJobs()
-      toast({ title: '成功', description: (res as any)?.message || '推送任务已重载' })
+      toast({ title: '成功', description: res.message || '推送任务已重载' })
     } catch {
       toast({ variant: 'destructive', title: '错误', description: '重载失败' })
     }
@@ -69,10 +69,10 @@ const NotifyTaskListView: React.FC = () => {
   const confirmRun = async () => {
     if (!runTargetId) return
     try {
-      const res = await runNotifyTask(runTargetId)
+      await runNotifyTask(runTargetId)
       setRunDialogOpen(false)
       setRunTargetId(null)
-      toast({ title: '成功', description: (res as any)?.message || '已加入队列' })
+      toast({ title: '成功', description: '已加入队列' })
     } catch {
       toast({ variant: 'destructive', title: '错误', description: '执行失败' })
     }

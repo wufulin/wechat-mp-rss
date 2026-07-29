@@ -42,8 +42,8 @@ const TagList: React.FC = () => {
       const allRes = await listTags({
         offset: 0,
         limit: 10000
-      }) as unknown as { list?: TagType[]; total?: number }
-      const allTagsData = allRes.list || []
+      })
+      const allTagsData = allRes.list
       // 应用搜索过滤
       let filteredTags = allTagsData
       if (searchText.trim()) {
@@ -189,13 +189,8 @@ const TagList: React.FC = () => {
       description: t('tags.messages.exportGenerating')
     })
     try {
-      const res = await ExportTags()
-      const data = (res as any).data ?? res
-      const blob = data instanceof Blob
-        ? data
-        : new Blob([data], { type: 'text/csv;charset=utf-8' })
-
-      const url = window.URL.createObjectURL(blob)
+      const data = await ExportTags()
+      const url = window.URL.createObjectURL(data)
       const a = document.createElement('a')
       a.href = url
       a.download = '标签列表.csv'
@@ -237,8 +232,7 @@ const TagList: React.FC = () => {
           description: t('tags.messages.importGenerating')
         })
         try {
-          const res = await ImportTags(formData)
-          const data = (res as any).data ?? res
+          const data = await ImportTags(formData)
           toast({
             title: t('tags.messages.importSuccess'),
             description: data?.message || t('tags.messages.importSuccess')

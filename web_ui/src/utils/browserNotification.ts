@@ -98,9 +98,8 @@ async function checkForNewArticles() {
     // 动态导入避免循环依赖
     const { getArticles } = await import('@/api/article')
     
-    // @ts-ignore - page/pageSize 会被内部转换为 offset/limit
-    const response = await getArticles({ page: 0, pageSize: 1 } as any) as any
-    const currentTotal = response?.total || 0
+    const response = await getArticles({ page: 0, pageSize: 1 })
+    const currentTotal = response.total
     
     if (lastArticleCount > 0 && currentTotal > lastArticleCount) {
       const newCount = currentTotal - lastArticleCount
@@ -139,9 +138,8 @@ export async function enableBrowserNotification(): Promise<boolean> {
     
     // 初始化文章计数
     const { getArticles } = await import('@/api/article')
-    // @ts-ignore - page/pageSize 会被内部转换为 offset/limit
-    const response = await getArticles({ page: 0, pageSize: 1 } as any) as any
-    lastArticleCount = response?.total || 0
+    const response = await getArticles({ page: 0, pageSize: 1 })
+    lastArticleCount = response.total
     
     // 开始定时检查（每60秒检查一次）
     if (pollInterval) {

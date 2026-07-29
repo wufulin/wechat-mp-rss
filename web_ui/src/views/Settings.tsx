@@ -174,8 +174,7 @@ const Settings: React.FC = () => {
 
   const loadStoreArticleImages = async () => {
     try {
-      const res = await getConfig('minio.store_article_images')
-      const data = (res as any)?.data || res
+      const data = await getConfig('minio.store_article_images')
       if (data?.config_value !== undefined && data?.config_value !== null && String(data.config_value).trim() !== '') {
         const v = String(data.config_value).toLowerCase()
         setStoreArticleImages(v === 'true' || v === '1')
@@ -245,8 +244,7 @@ const Settings: React.FC = () => {
     try {
       const loadKey = async (key: string) => {
         try {
-          const res = await getConfig(key)
-          const data = (res as any)?.data || res
+          const data = await getConfig(key)
           return data?.config_value
         } catch (e: any) {
           if (e?.response?.status === 404 || e?.message?.includes?.('404')) {
@@ -373,8 +371,7 @@ const Settings: React.FC = () => {
 
   const loadTagExtractPrompt = async () => {
     try {
-      const res = await getConfig('article_tag.ai_prompt')
-      const data = (res as any)?.data || res
+      const data = await getConfig('article_tag.ai_prompt')
       const value = data?.config_value ? String(data.config_value) : DEFAULT_TAG_EXTRACT_PROMPT
       setTagPrompt(value)
       setTempTagPrompt(value)
@@ -396,8 +393,7 @@ const Settings: React.FC = () => {
   // 加载采集起始时间配置
   const loadCollectStartDate = async () => {
     try {
-      const res = await getConfig('collect_start_date')
-      const data = (res as any)?.data || res
+      const data = await getConfig('collect_start_date')
       if (data && data.config_value) {
         const date = dayjs(data.config_value).toDate()
         setCollectStartDate(date)

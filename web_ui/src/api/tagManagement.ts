@@ -1,8 +1,13 @@
 import http from './http'
 import type { Tag, TagCreate } from '@/types/tagManagement'
 
+export interface TagListResult {
+  list: Tag[]
+  total: number
+}
+
 export const listTags = (params?: { offset?: number; limit?: number }) => {
-  return http.get<Tag[]>('/wx/tags', { 
+  return http.get<TagListResult>('/wx/tags', {
     params: {
       offset: params?.offset || 0,
       limit: params?.limit || 100

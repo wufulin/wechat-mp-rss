@@ -45,7 +45,7 @@ const FetchTaskForm: React.FC = () => {
       ;(async () => {
         setLoading(true)
         try {
-          const res = await getFetchTask(id) as any
+          const res = await getFetchTask(id)
           form.reset({
             name: res.name,
             cron_exp: res.cron_exp,

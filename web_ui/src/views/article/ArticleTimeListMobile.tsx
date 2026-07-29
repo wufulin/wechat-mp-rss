@@ -83,10 +83,11 @@ const ArticleTimeListMobile: React.FC = () => {
         pageSize: 100
       })
 
-      const list = ((res as any).list || (res as any).data?.list || []).map((item: any) => ({
+      const list = res.list.map((item) => ({
         id: item.id || item.mp_id,
         name: item.name || item.mp_name,
-        avatar: item.avatar || item.mp_cover || '',
+        mp_name: item.mp_name,
+        avatar: item.mp_cover || '',
         mp_intro: item.mp_intro || ''
       }))
 
@@ -114,10 +115,10 @@ const ArticleTimeListMobile: React.FC = () => {
         mp_id: activeMpId
       })
 
-      const list = ((res as any).list || (res as any).data?.list || []).map((item: any) => ({
+      const list = res.list.map((item) => ({
         ...item,
-        mp_name: item.mp_name || item.account_name || '未知公众号',
-        url: item.url || `https://mp.weixin.qq.com/s/${item.id}`
+        mp_name: item.mp_name || '未知公众号',
+        url: item.link || `https://mp.weixin.qq.com/s/${item.id}`
       }))
 
       if (isLoadMore) {
@@ -128,7 +129,7 @@ const ArticleTimeListMobile: React.FC = () => {
         setPagination(prev => ({ ...prev, current: 1 }))
       }
 
-      setPagination(prev => ({ ...prev, total: (res as any).total || (res as any).data?.total || 0 }))
+      setPagination(prev => ({ ...prev, total: res.total }))
       setHasMore(list.length >= pagination.pageSize)
     } catch (error: any) {
       console.error('获取文章列表错误:', error)
@@ -160,14 +161,13 @@ const ArticleTimeListMobile: React.FC = () => {
   const viewArticle = async (record: Article) => {
     setLoading(true)
     try {
-      const article = await getArticleDetail(record.id, 0)
-      const data = (article as any).data || article
+      const data = await getArticleDetail(record.id, 0)
       setCurrentArticle({
         id: data.id.toString(),
         title: data.title,
         content: processedContent(data),
         time: formatDateTime(data.created_at),
-        url: data.url
+        url: data.link
       })
       setArticleModalVisible(true)
     } catch (error: any) {

@@ -22,7 +22,8 @@ import {
 import { Message } from '@/utils/message'
 import { Modal } from '@/utils/modal'
 import { Edit, Trash2, Plus, Upload as UploadIcon } from 'lucide-react'
-import { getSubscriptions, addSubscription, updateSubscription, deleteSubscription, SubscriptionListResult } from '@/api/subscription'
+import { getSubscriptions, addSubscription, updateSubscription, deleteSubscription } from '@/api/subscription'
+import type { Subscription } from '@/api/subscription'
 import { getToken } from '@/utils/auth'
 import { useTranslation } from 'react-i18next'
 
@@ -43,15 +44,6 @@ type FormValues = {
   mp_cover?: string
   mp_intro?: string
   status: boolean
-}
-
-interface Subscription {
-  mp_id: string
-  mp_name: string
-  mp_cover: string
-  mp_intro: string
-  status: number
-  sync_time: string | number
 }
 
 const WeChatMpManagement: React.FC = () => {
@@ -82,10 +74,10 @@ const WeChatMpManagement: React.FC = () => {
       const res = await getSubscriptions({
         page: pagination.current - 1,
         pageSize: pagination.pageSize
-      }) as unknown as SubscriptionListResult
+      })
 
-      const list = (res.list || res.data?.list || [])
-      const total = res.total || res.data?.total || 0
+      const list = res.list
+      const total = res.total
       
       setMpList(list)
       setPagination(prev => ({ ...prev, total }))
@@ -118,8 +110,8 @@ const WeChatMpManagement: React.FC = () => {
     form.reset({
       mp_id: record.mp_id,
       mp_name: record.mp_name,
-      mp_cover: record.mp_cover,
-      mp_intro: record.mp_intro,
+      mp_cover: record.mp_cover || '',
+      mp_intro: record.mp_intro || '',
       status: record.status === 1,
     })
     setVisible(true)

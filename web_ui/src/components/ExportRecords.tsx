@@ -88,7 +88,7 @@ const ExportRecords = forwardRef<ExportRecordsRef, ExportRecordsProps>(({ mp_id 
       cancelText: '取消',
       onOk: async () => {
         try {
-          const response: any = await DeleteExportRecords({
+          const response = await DeleteExportRecords({
             mp_id: mp_id,
             filename: record.path || record.filename
           })
@@ -108,7 +108,7 @@ const ExportRecords = forwardRef<ExportRecordsRef, ExportRecordsProps>(({ mp_id 
             toast({
               variant: "destructive",
               title: "删除失败",
-              description: response.data?.message || '未知错误'
+              description: response.message || '未知错误'
             })
           }
         } catch (error) {
@@ -121,10 +121,9 @@ const ExportRecords = forwardRef<ExportRecordsRef, ExportRecordsProps>(({ mp_id 
   const fetchExportRecords = async (): Promise<void> => {
     setLoading(true)
     try {
-      const response: any = await getExportRecords({ mp_id })
+      const response = await getExportRecords({ mp_id })
       console.log('API 返回数据:', response)
-      const records = Array.isArray(response) ? response : (response?.data || [])
-      const formattedRecords = records.map((record: any) => ({
+      const formattedRecords = response.map((record) => ({
         ...record,
         filename: record.filename || '-',
         size: record.size || 0,

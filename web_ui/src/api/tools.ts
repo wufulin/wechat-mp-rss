@@ -1,5 +1,48 @@
 import http from './http'
 
+interface ExportArticlesResult {
+  export_path: string
+  message: string
+}
+
+interface ExtractTagsResult {
+  success_count: number
+  error_count: number
+  results: Array<Record<string, unknown>>
+}
+
+export interface MissingTagsJobStart {
+  job_id: string | null
+  total: number
+}
+
+export interface MissingTagsJobStatus {
+  job_id: string
+  status: string
+  total: number
+  processed: number
+  success_count?: number
+  error_count?: number
+  message?: string
+  started_at?: number
+  finished_at?: number | null
+  elapsed_seconds?: number | null
+}
+
+export interface ExportRecord {
+  filename: string
+  size: number
+  created_time: string
+  modified_time: string
+  path: string
+  download_url: string
+}
+
+interface DeleteExportRecordResult {
+  filename: string
+  message: string
+}
+
 export const exportArticles = (params:any) => {
     // 确保 format 是数组
     const formatArray = Array.isArray(params.format) ? params.format : []
@@ -55,7 +98,7 @@ export const exportArticles = (params:any) => {
       throw new Error('请至少选择一个导出格式')
     }
     
-  return http.post<{code: number, data: any, message?: string}>('/wx/tools/export/articles', requestData, {
+  return http.post<ExportArticlesResult>('/wx/tools/export/articles', requestData, {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -64,46 +107,34 @@ export const exportArticles = (params:any) => {
   })
 }
 export const reExtractTags = (articleIds: string[]) => {
-  return http.post<{code: number, data: any, message?: string}>('/wx/tools/extract_tags', {
+  return http.post<ExtractTagsResult>('/wx/tools/extract_tags', {
     article_ids: articleIds
   })
 }
 
 /** 异步补充缺失标签：返回 job_id 与 total，再轮询 getMissingTagsJobStatus */
 export const startMissingTagsJob = () => {
-  return http.post<{ code: number; data: { job_id: string | null; total: number }; message?: string }>(
+  return http.post<MissingTagsJobStart>(
     '/wx/tools/extract_tags_missing/start'
   )
 }
 
 export const getMissingTagsJobStatus = (jobId: string) => {
-  return http.get<{
-    code: number
-    data: {
-      job_id: string
-      status: string
-      total: number
-      processed: number
-      success_count?: number
-      error_count?: number
-      message?: string
-      started_at?: number
-      finished_at?: number | null
-      elapsed_seconds?: number | null
-    }
-  }>('/wx/tools/extract_tags_missing/status', { params: { job_id: jobId } })
+  return http.get<MissingTagsJobStatus>('/wx/tools/extract_tags_missing/status', {
+    params: { job_id: jobId }
+  })
 }
 
 export const getExportRecords = (params:any) => {
     const requestData = {
       mp_id: params.mp_id,
     };
-  return http.get<{code: number, data: string}>('/wx/tools/export/list', {params:requestData})
+  return http.get<ExportRecord[]>('/wx/tools/export/list', {params:requestData})
 }
 export const DeleteExportRecords = (params:any) => {
     const requestData = {
       mp_id: params.mp_id||"",
       filename: params.filename,
     };
-  return http.delete<{code: number, data: string}>('/wx/tools/export/delete', {data:requestData})
+  return http.delete<DeleteExportRecordResult>('/wx/tools/export/delete', {data:requestData})
 }

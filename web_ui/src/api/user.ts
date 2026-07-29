@@ -19,7 +19,7 @@ export interface UpdateUserParams {
 }
 
 export const getUserInfo = () => {
-  return http.get<{code: number, data: UserInfo}>('/wx/user')
+  return http.get<UserInfo>('/wx/user')
 }
 
 export const updateUserInfo = (data: UpdateUserParams) => {
@@ -52,7 +52,7 @@ export const toggleUserStatus = (active: boolean) => {
 export const uploadAvatar = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  return http.post<{code: number, url: string}>('/wx/user/avatar', formData, {
+  return http.post<{avatar: string}>('/wx/user/avatar', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

@@ -133,31 +133,12 @@ const ExportModal = forwardRef<ExportModalRef, ExportModalProps>(({ onConfirm },
 
   const submitExport = async (params: any) => {
     try {
-      const result: any = await exportArticles(params)
-      // http 拦截器在 code === 0 时返回 response.data.data 或 response.data
-      // 如果能执行到这里，说明请求成功了（拦截器已经处理了错误情况）
-      // 检查 result 的结构
-      let message = '导出任务已启动，请稍后下载文件'
-      let exportPath = null
-      
-      if (result && typeof result === 'object') {
-        // 如果 result 有 code 字段，说明拦截器返回了完整的 response.data
-        if ('code' in result) {
-          message = result.message || result.data?.message || message
-          exportPath = result.data?.export_path
-        } else {
-          // 如果 result 没有 code 字段，说明拦截器返回了 response.data.data
-          // 这种情况下，result 就是 data 字段的内容
-          message = result.message || message
-          exportPath = result.export_path
-        }
-      }
-      
-      Message.success(message)
+      const result = await exportArticles(params)
+      Message.success(result.message || '导出任务已启动，请稍后下载文件')
       
       // 如果有导出路径，记录日志
-      if (exportPath) {
-        console.log('导出文件路径:', exportPath)
+      if (result.export_path) {
+        console.log('导出文件路径:', result.export_path)
       }
     } catch (error: any) {
       console.error('导出失败:', error)
