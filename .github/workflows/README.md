@@ -32,13 +32,13 @@ python scripts/check-release-version.py
 发布新版本：
 
 ```bash
-git tag -a v1.1.7 -m "release: v1.1.7"
-git push origin v1.1.7
+git tag -a v1.1.8 -m "release: v1.1.8"
+git push origin v1.1.8
 ```
 
 工作流会发布以下 Docker Hub 标签：
 
-- `franklin888/werss:1.1.7`：生产部署使用，不覆盖。
+- `franklin888/werss:1.1.8`：生产部署使用，不覆盖。
 - `franklin888/werss:1.1`：最新兼容补丁版本。
 - `franklin888/werss:1`：最新兼容小版本。
 - `franklin888/werss:latest`：便捷别名，不用于生产部署。

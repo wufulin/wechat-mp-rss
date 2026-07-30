@@ -13,6 +13,19 @@ class DockerBuildConfigurationTests(unittest.TestCase):
         self.assertIn("image: traefik:v3.6.17", content)
         self.assertNotIn("image: traefik:v3.3\n", content)
 
+    def test_full_stack_compresses_public_http_responses(self):
+        content = (REPOSITORY_ROOT / "docker-compose.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "traefik.http.routers.werss.middlewares=werss-compress@docker",
+            content,
+        )
+        self.assertIn(
+            "traefik.http.middlewares.werss-compress.compress=true",
+            content,
+        )
+
     def test_dockerfiles_keep_expensive_browser_layer_before_application_code(self):
         for name in ("Dockerfile", "Dockerfile.cn"):
             with self.subTest(dockerfile=name):

@@ -4,7 +4,7 @@
 
 # WeRSS - 自托管微信公众号内容聚合与AI分析系统
 
-![Version](https://img.shields.io/badge/version-1.1.7-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.8-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 ![GitHub Stars](https://img.shields.io/github/stars/letuswerss/werss?style=social)
@@ -684,6 +684,12 @@ werss/
 ---
 
 ## 更新日志
+
+### v1.1.8
+
+**公网首屏性能修复**
+- 登录页之外的业务路由改为按需加载，避免首屏下载图表与后台管理依赖
+- 完整栈通过 Traefik 压缩公网响应，修复低带宽链路下 HTTP 200 但长时间白屏
 
 ### v1.1.7
 

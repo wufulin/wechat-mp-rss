@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import router from './router'
 import { RouterProvider } from 'react-router-dom'
@@ -18,19 +18,29 @@ initSettings()
 ReactDOM.createRoot(document.getElementById('app')!).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <RouterProvider 
-        router={router}
-        future={{
-          v7_startTransition: true,
-        }}
-        fallbackElement={
+      <Suspense
+        fallback={
           <div className="flex items-center justify-center h-screen">
             <div className="text-center">
               <div className="text-lg font-semibold mb-2">加载中...</div>
             </div>
           </div>
         }
-      />
+      >
+        <RouterProvider
+          router={router}
+          future={{
+            v7_startTransition: true,
+          }}
+          fallbackElement={
+            <div className="flex items-center justify-center h-screen">
+              <div className="text-center">
+                <div className="text-lg font-semibold mb-2">加载中...</div>
+              </div>
+            </div>
+          }
+        />
+      </Suspense>
       <Toaster />
     </ThemeProvider>
   </React.StrictMode>

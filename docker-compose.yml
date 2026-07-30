@@ -134,6 +134,8 @@ services:
       - traefik.http.routers.werss.rule=Host(`${WERSS_HOST:-localhost}`)
       - traefik.http.routers.werss.entrypoints=websecure
       - traefik.http.routers.werss.tls.certresolver=letsencrypt
+      - traefik.http.routers.werss.middlewares=werss-compress@docker
+      - traefik.http.middlewares.werss-compress.compress=true
       - traefik.http.services.werss.loadbalancer.server.port=8001
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]

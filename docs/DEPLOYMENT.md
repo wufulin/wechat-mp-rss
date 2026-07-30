@@ -19,7 +19,7 @@ WeRSS 支持两种部署模式，按需选择：
 
 ```env
 WERSS_IMAGE=docker.io/franklin888/werss
-WERSS_IMAGE_TAG=1.1.7
+WERSS_IMAGE_TAG=1.1.8
 ```
 
 正式发布由 `.github/workflows/release-deploy.yaml` 处理。推送与源码版本一致的
@@ -56,6 +56,8 @@ docker compose up -d
 数据目录默认在 `./data/`（含 `traefik/acme` 证书存储），可通过环境变量覆盖。
 完整栈固定使用 `traefik:v3.6.17`，以兼容最低 Docker API `1.40` 的新版
 Docker Engine；旧版 Traefik 会因 Docker provider 无法读取容器标签而返回 404。
+完整栈还会通过 Traefik 压缩公网响应，减少 JavaScript、CSS 和 API 内容在低带宽
+链路上的传输时间。
 
 ### 本地开发
 
@@ -249,6 +251,7 @@ MINIO_PUBLIC_URL=https://cdn.example.com
 | `Connection refused` 连不上数据库 | 检查 Postgres 端口映射是否为 `0.0.0.0:5432`；若为 `127.0.0.1:5432` 需通过 Docker 网络连接 |
 | Traefik 502 / 无路由 | `werss` 是否在 Traefik 网络中；`loadbalancer.server.port` 是否为 `8001`；容器是否健康 |
 | Traefik 404 且日志提示 Docker API `1.24` 过旧 | 确认完整栈使用仓库固定的 `traefik:v3.6.17` 或更新兼容版本 |
+| 首页 HTTP 200 但长时间空白 | 检查大型 `/static/assets/*.js` 的下载时间及响应是否包含 `Content-Encoding: gzip` 或 `br`；完整栈应启用 `werss-compress` 中间件 |
 | 证书不下发 | `certresolver` 名是否正确；80 端口是否通（HTTP-01）；防火墙 |
 | 只要 HTTP 内网访问 | `WERSS_ENTRYPOINTS=web`，不设 `WERSS_TLS_RESOLVER` |
 | 健康检查 404 | 确认镜像包含 `/api/health` 端点（需 rebuild） |
