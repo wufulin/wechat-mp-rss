@@ -8,6 +8,7 @@ import { login } from '@/api/auth'
 import { useForm } from 'react-hook-form'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { User, Lock, Zap, Shield, Globe, CheckCircle } from 'lucide-react'
+import packageMetadata from '../../package.json'
 
 interface LoginFormData {
   username: string
@@ -157,7 +158,7 @@ const Login: React.FC = () => {
         {/* 右侧登录区域 */}
         <div className="flex-1 flex justify-center items-center p-6 lg:p-20 bg-background relative">
           <div className="absolute top-10 right-10 text-muted-foreground text-sm hidden lg:block">
-             Version 1.1.2
+             Version {packageMetadata.version}
           </div>
           
           <Card className="w-full max-w-[460px] p-10 lg:p-12 bg-card rounded-[2rem] shadow-2xl shadow-primary/5 border-none animate-in zoom-in-95 duration-700">
