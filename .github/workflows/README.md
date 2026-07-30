@@ -32,13 +32,13 @@ python scripts/check-release-version.py
 发布新版本：
 
 ```bash
-git tag -a v1.1.6 -m "release: v1.1.6"
-git push origin v1.1.6
+git tag -a v1.1.7 -m "release: v1.1.7"
+git push origin v1.1.7
 ```
 
 工作流会发布以下 Docker Hub 标签：
 
-- `franklin888/werss:1.1.6`：生产部署使用，不覆盖。
+- `franklin888/werss:1.1.7`：生产部署使用，不覆盖。
 - `franklin888/werss:1.1`：最新兼容补丁版本。
 - `franklin888/werss:1`：最新兼容小版本。
 - `franklin888/werss:latest`：便捷别名，不用于生产部署。
@@ -55,8 +55,9 @@ Repository Actions 配置：
 | `DOCKERHUB_USERNAME` | Variable | Docker Hub 用户名 |
 | `DOCKERHUB_TOKEN` | Secret | Docker Hub Read & Write access token |
 
-`franklin888/werss` 必须是公开仓库，GCP 才能使用匿名只读拉取。发布工作流会在部署前
-通过 Docker Hub 公共 API 验证该版本可拉取，不会把写令牌复制到服务器。
+`franklin888/werss` 必须是公开仓库，GCP 才能使用匿名只读拉取。发布工作流会在
+部署前通过 Docker Registry V2 匿名拉取接口验证该版本与目标架构可用，不会把写
+令牌复制到服务器。
 
 `production` environment 配置：
 

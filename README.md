@@ -4,7 +4,7 @@
 
 # WeRSS - 自托管微信公众号内容聚合与AI分析系统
 
-![Version](https://img.shields.io/badge/version-1.1.6-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.7-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
 ![GitHub Stars](https://img.shields.io/github/stars/letuswerss/werss?style=social)
@@ -684,6 +684,13 @@ werss/
 ---
 
 ## 更新日志
+
+### v1.1.7
+
+**发布链路修复**
+- Docker Hub 公开性检查改为真实的匿名 Registry V2 拉取
+- 发布门禁同时确认 `linux/amd64` 与 `linux/arm64` manifest
+- 保留 `v1.1.6` 标签不可变，以补丁版本完成首次 GCP 自动部署
 
 ### v1.1.6
 
