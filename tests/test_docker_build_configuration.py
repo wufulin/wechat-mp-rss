@@ -6,6 +6,13 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 class DockerBuildConfigurationTests(unittest.TestCase):
+    def test_full_stack_uses_docker_api_compatible_traefik(self):
+        content = (REPOSITORY_ROOT / "docker-compose.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("image: traefik:v3.6.16", content)
+        self.assertNotIn("image: traefik:v3.3\n", content)
+
     def test_dockerfiles_keep_expensive_browser_layer_before_application_code(self):
         for name in ("Dockerfile", "Dockerfile.cn"):
             with self.subTest(dockerfile=name):
