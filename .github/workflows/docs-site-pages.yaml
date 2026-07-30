@@ -37,18 +37,19 @@ jobs:
         working-directory: ./docs-site
         run: npm ci
 
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Build docs site
         working-directory: ./docs-site
         env:
-          VITE_BASE_PATH: /werss/
+          VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
         run: npm run build
 
       - name: Add SPA fallback for GitHub Pages
         working-directory: ./docs-site/dist
         run: cp index.html 404.html
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
