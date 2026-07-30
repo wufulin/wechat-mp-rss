@@ -10,7 +10,7 @@
 services:
   # ==================== Traefik 反向代理 ====================
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.6.16
     container_name: ${TRAEFIK_CONTAINER_NAME:-werss-traefik}
     restart: unless-stopped
     command:

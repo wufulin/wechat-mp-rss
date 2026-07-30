@@ -49,9 +49,13 @@ docker compose up -d
 ```
 
 - **生产/公网域名**：将 `WERSS_HOST` 设为该域名，DNS A 记录指向服务器，开放 80、443。
+- **只有公网 IP**：将 `WERSS_HOST` 设为该 IP，通过 `https://<公网 IP>/` 访问；
+  若没有可用的 ACME 证书，浏览器会提示证书不受信任。
 - **仅本机试用**：可叠加 `docker-compose.dev.yml`，通过映射的 `http://localhost:8001` 访问应用（不经 Traefik）；若仍走 Traefik，Let’s Encrypt 对 `localhost` 无法签发，需使用真实域名或自行调整路由。
 
 数据目录默认在 `./data/`（含 `traefik/acme` 证书存储），可通过环境变量覆盖。
+完整栈固定使用 `traefik:v3.6.16`，以兼容最低 Docker API `1.40` 的新版
+Docker Engine；旧版 Traefik 会因 Docker provider 无法读取容器标签而返回 404。
 
 ### 本地开发
 
@@ -189,8 +193,8 @@ MINIO_PUBLIC_URL=https://cdn.example.com
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `WERSS_HOST` | `localhost` | Traefik `Host()` 规则；公网部署请改为你的域名 |
-| `ACME_EMAIL` | `admin@example.com` | Let’s Encrypt 注册邮箱 |
+| `WERSS_HOST` | `localhost` | Traefik `Host()` 规则；公网部署请改为域名或公网 IP |
+| `ACME_EMAIL` | `admin@example.com` | Let’s Encrypt 注册邮箱；申请证书时必须改为真实邮箱 |
 | `TRAEFIK_HTTP_PORT` | `80` | 宿主机 HTTP 端口 |
 | `TRAEFIK_HTTPS_PORT` | `443` | 宿主机 HTTPS 端口 |
 | `TRAEFIK_CONTAINER_NAME` | `werss-traefik` | Traefik 容器名 |
@@ -244,6 +248,7 @@ MINIO_PUBLIC_URL=https://cdn.example.com
 |------|------|
 | `Connection refused` 连不上数据库 | 检查 Postgres 端口映射是否为 `0.0.0.0:5432`；若为 `127.0.0.1:5432` 需通过 Docker 网络连接 |
 | Traefik 502 / 无路由 | `werss` 是否在 Traefik 网络中；`loadbalancer.server.port` 是否为 `8001`；容器是否健康 |
+| Traefik 404 且日志提示 Docker API `1.24` 过旧 | 确认完整栈使用仓库固定的 `traefik:v3.6.16` 或更新兼容版本 |
 | 证书不下发 | `certresolver` 名是否正确；80 端口是否通（HTTP-01）；防火墙 |
 | 只要 HTTP 内网访问 | `WERSS_ENTRYPOINTS=web`，不设 `WERSS_TLS_RESOLVER` |
 | 健康检查 404 | 确认镜像包含 `/api/health` 端点（需 rebuild） |
