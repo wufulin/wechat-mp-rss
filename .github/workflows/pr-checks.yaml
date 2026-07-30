@@ -131,7 +131,7 @@ jobs:
       - name: Build docs site
         working-directory: docs-site
         env:
-          VITE_BASE_PATH: /werss/
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
 
   docker:
