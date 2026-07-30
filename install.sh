@@ -74,6 +74,8 @@ fi
 
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
+# Docker 镜像在构建时把浏览器安装到 /ms-playwright，并通过 ENV 传入这里。
+# 非 Docker 环境继续使用原有的持久化目录；不要覆盖调用方显式配置的路径。
 PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-$PLANT_PATH/driver/_$plantform}
 BROWSER_TYPE=${BROWSER_TYPE:-webkit}
 echo "export PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH}

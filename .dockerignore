@@ -5,10 +5,21 @@ data/
 *.sqlite3
 
 # 前端开发文件（构建时会单独处理）
-web_ui/node_modules/
+**/node_modules/
 web_ui/dist/
 web_ui/.vite/
 web_ui/.cache/
+web_ui/playwright-report/
+web_ui/test-results/
+
+# 本地隔离环境和工作树
+.venv/
+.worktrees/
+
+# 不参与应用镜像构建的站点和本地产物
+docs-site/
+static/
+images/
 
 # Git 相关
 .git/

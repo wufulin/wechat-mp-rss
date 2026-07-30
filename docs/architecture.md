@@ -18,6 +18,8 @@
 完整栈由 `docker-compose.yml` 定义；GCP 生产 `.env` 将 `DB` 指向栈内 PostgreSQL，
 本地示例仍可使用 SQLite。已有外部数据库、对象存储或反向代理时使用
 `docker-compose.app-only.yml`。持久化数据位于宿主机挂载目录，不写入应用镜像。
+Playwright 浏览器作为镜像内容安装在 `/ms-playwright`；构建和运行时使用同一个
+`PLAYWRIGHT_BROWSERS_PATH`，浏览器安装失败会直接阻止发布缺少采集能力的镜像。
 
 ## 配置边界
 
@@ -35,6 +37,7 @@
 vX.Y.Z Git 标签
   -> 版本一致性校验
   -> 后端 / 前端 / 文档质量检查
+  -> 导入上一版 latest 的多架构 inline cache
   -> Docker Buildx 多架构构建
   -> docker.io/franklin888/werss:X.Y.Z
   -> GitHub production environment
@@ -45,6 +48,8 @@ vX.Y.Z Git 标签
 
 生产 Compose 使用语义化版本号，不使用 Git SHA 或 `latest`。镜像 digest 保留在
 GitHub Actions 发布记录中，用于审计构建产物，但不作为服务器配置接口。
+`latest` 仅作为非生产别名和下一次发布的构建缓存来源；PR 的 amd64 构建使用独立
+GitHub Actions cache scope，避免覆盖发布所需的多架构缓存。
 
 ## 故障与回滚边界
 
