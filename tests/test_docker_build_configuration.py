@@ -10,7 +10,7 @@ class DockerBuildConfigurationTests(unittest.TestCase):
         content = (REPOSITORY_ROOT / "docker-compose.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("image: traefik:v3.6.16", content)
+        self.assertIn("image: traefik:v3.6.17", content)
         self.assertNotIn("image: traefik:v3.3\n", content)
 
     def test_dockerfiles_keep_expensive_browser_layer_before_application_code(self):
