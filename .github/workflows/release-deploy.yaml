@@ -113,8 +113,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=registry,ref=docker.io/${{ vars.DOCKERHUB_USERNAME }}/werss:latest
+            type=gha,scope=werss-ci-amd64
+          cache-to: type=inline
 
       - name: Confirm the release image is publicly pullable
         env:

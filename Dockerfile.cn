@@ -1,5 +1,7 @@
+# syntax=docker/dockerfile:1.4
+
 # 多阶段构建：第一阶段 - 前端构建（使用国内镜像源）
-FROM --platform=$BUILDPLATFORM node:24.8.0-slim AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:24.8.0-slim@sha256:cadbfafeb6baf87eaaffa40b3640209c4b7fd38cebde65059d15bc39cd636b85 AS frontend-builder
 
 # 设置工作目录
 WORKDIR /app
@@ -18,7 +20,8 @@ COPY web_ui/package.json web_ui/pnpm-lock.yaml* web_ui/pnpm-workspace.yaml web_u
 
 # 安装前端依赖
 WORKDIR /app/web_ui
-RUN pnpm install --no-frozen-lockfile
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # 复制前端源代码
 COPY web_ui/ .
@@ -69,8 +72,35 @@ COPY requirements.txt .
 
 # 安装 Python 依赖（在构建时安装，避免运行时问题）
 # 优先使用国内镜像源，如果失败则使用默认源
-RUN uv pip install --system -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple || \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple || \
     pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 安装 Playwright 浏览器（放在业务代码前，避免代码变更使本层失效）
+# 注意：Playwright 是 Python 包，需要先安装 Python 依赖
+# 使用 ARG 接收构建参数，ENV 设置运行时环境变量
+ARG BROWSER_TYPE=firefox
+ARG TARGETARCH
+# 根据架构选择 Playwright 下载源：
+# - ARM 架构 (arm64) 使用官方源，因为国内镜像缺少 ARM 版本
+# - AMD64 架构使用国内镜像源加速下载
+ENV BROWSER_TYPE=${BROWSER_TYPE} \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000
+# 根据架构选主源；npmmirror 常滞后于新版 Playwright（如 debian-13 包 404），失败则回退官方 CDN
+RUN export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000; \
+    if [ "$TARGETARCH" = "arm64" ]; then \
+        echo "检测到 ARM64，Playwright 使用官方源"; \
+        export PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net; \
+    else \
+        echo "检测到 AMD64，先尝试 npmmirror"; \
+        export PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright; \
+    fi && \
+    echo "PLAYWRIGHT_DOWNLOAD_HOST=$PLAYWRIGHT_DOWNLOAD_HOST" && \
+    ( python3 -m playwright install ${BROWSER_TYPE} --with-deps || \
+      ( echo "主源失败（镜像未同步时常见），改用 playwright.azureedge.net 重试..." && \
+        PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net python3 -m playwright install ${BROWSER_TYPE} --with-deps ) \
+    )
 
 # 复制后端代码（排除 web_ui，因为前端已经构建完成）
 COPY config.example.yaml config.yaml
@@ -91,31 +121,6 @@ COPY start.sh .
 
 # 从第一阶段复制前端构建产物
 COPY --from=frontend-builder /app/web_ui/dist ./static
-
-# 安装 Playwright 浏览器（Docker 环境默认安装）
-# 注意：Playwright 是 Python 包，需要先安装 Python 依赖
-# 使用 ARG 接收构建参数，ENV 设置运行时环境变量
-ARG BROWSER_TYPE=firefox
-ARG TARGETARCH
-# 根据架构选择 Playwright 下载源：
-# - ARM 架构 (arm64) 使用官方源，因为国内镜像缺少 ARM 版本
-# - AMD64 架构使用国内镜像源加速下载
-ENV BROWSER_TYPE=${BROWSER_TYPE} \
-    PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000
-# 根据架构选主源；npmmirror 常滞后于新版 Playwright（如 debian-13 包 404），失败则回退官方 CDN
-RUN export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000; \
-    if [ "$TARGETARCH" = "arm64" ]; then \
-        echo "检测到 ARM64，Playwright 使用官方源"; \
-        export PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net; \
-    else \
-        echo "检测到 AMD64，先尝试 npmmirror"; \
-        export PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright; \
-    fi && \
-    echo "PLAYWRIGHT_DOWNLOAD_HOST=$PLAYWRIGHT_DOWNLOAD_HOST" && \
-    ( python3 -m playwright install ${BROWSER_TYPE} --with-deps || \
-      ( echo "主源失败（镜像未同步时常见），改用 playwright.azureedge.net 重试..." && \
-        PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net python3 -m playwright install ${BROWSER_TYPE} --with-deps ) \
-    ) || (echo "Playwright 浏览器仍未安装成功，启动时 install.sh 会再试" && true)
 
 # 设置脚本权限
 RUN chmod +x install.sh start.sh

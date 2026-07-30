@@ -46,6 +46,17 @@ git push origin v1.1.7
 同名版本镜像视为不可变。工作流失败时使用 GitHub Actions 的 **Re-run failed
 jobs**，不要删除并重建同名 Git 标签。
 
+## 构建缓存
+
+- PR 和 `main` 的 amd64 镜像检查使用 `werss-ci-amd64` GitHub Actions cache
+  scope，避免与其他 Buildx 任务共享默认 `buildkit` scope。
+- 正式发布从上一版 `latest` 导入 registry inline cache，并把新的 inline cache
+  写入本次多架构镜像。这样 arm64 的 Python、系统依赖和 Playwright 层可以跨版本
+  标签复用；生产部署仍只使用精确的 `X.Y.Z` 标签。
+- 正式发布使用的 `Dockerfile` 以 digest 固定 Node 和 Python 基础镜像。升级
+  Node、Python 或系统安全补丁时，应显式更新 digest，并预期对应架构的系统依赖
+  层重新构建。
+
 ## GitHub 配置
 
 Repository Actions 配置：

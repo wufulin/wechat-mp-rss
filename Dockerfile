@@ -2,7 +2,7 @@
 # BuildKit：DOCKER_BUILDKIT=1 docker compose build（或默认已开启）以使用 RUN --mount=type=cache
 
 # 多阶段构建：第一阶段 - 前端构建
-FROM --platform=$BUILDPLATFORM node:24.8.0-slim AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:24.8.0-slim@sha256:cadbfafeb6baf87eaaffa40b3640209c4b7fd38cebde65059d15bc39cd636b85 AS frontend-builder
 
 # 设置工作目录
 WORKDIR /app
@@ -24,9 +24,12 @@ COPY web_ui/ .
 # 构建前端
 RUN pnpm build
 
+# 直接复制目标架构的 uv 静态二进制，避免在 QEMU 下通过 pip 安装 uv。
+FROM ghcr.io/astral-sh/uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c AS uv-bin
+
 # 多阶段构建：第二阶段 - Python 应用
 # 最终阶段跟随目标平台，确保多架构清单中的镜像架构真实匹配。
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -52,8 +55,8 @@ WORKDIR /app
 # 但 Docker 构建时使用 requirements.txt，确保两者保持同步
 COPY requirements.txt .
 
-# 安装 uv 包管理器（用于快速安装 Python 依赖）
-RUN pip install uv --no-cache-dir
+# 安装固定版本的 uv 包管理器（用于快速安装 Python 依赖）
+COPY --from=uv-bin /uv /usr/local/bin/uv
 
 # 安装 Python 依赖（缓存 wheel；仅 requirements 变更时重跑）
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -65,6 +68,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ARG BROWSER_TYPE=firefox
 ARG TARGETARCH
 ENV BROWSER_TYPE=${BROWSER_TYPE} \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000
 RUN export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000; \
     if [ "$TARGETARCH" = "arm64" ]; then \
@@ -76,7 +80,7 @@ RUN export PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=300000; \
       python3 -m playwright install ${BROWSER_TYPE} --with-deps || \
       ( echo "npmmirror 失败，改用官方 CDN..." && \
         PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.azureedge.net python3 -m playwright install ${BROWSER_TYPE} --with-deps ) \
-    ) || (echo "Playwright 浏览器安装失败，将在运行时安装" && true)
+    )
 
 # 复制后端代码（排除 web_ui，因为前端已经构建完成）
 COPY config.example.yaml config.yaml
