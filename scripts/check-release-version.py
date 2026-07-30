@@ -38,6 +38,17 @@ def frontend_version() -> str:
     return str(package["version"])
 
 
+def login_version() -> str:
+    content = (ROOT / "web_ui/src/views/Login.tsx").read_text(encoding="utf-8")
+    if re.search(r"Version\s+[0-9]+\.[0-9]+\.[0-9]+", content):
+        raise ValueError("Login.tsx contains a hard-coded release version")
+    if "Version {packageMetadata.version}" not in content:
+        raise ValueError(
+            "Login.tsx must render the version from web_ui/package.json"
+        )
+    return frontend_version()
+
+
 def readme_version() -> str:
     content = (ROOT / "README.md").read_text(encoding="utf-8")
     match = re.search(r"shields\.io/badge/version-([0-9]+\.[0-9]+\.[0-9]+)-", content)
@@ -52,6 +63,7 @@ def main() -> int:
         "core/ver.py": core_version(),
         "pyproject.toml": project_version(),
         "web_ui/package.json": frontend_version(),
+        "web_ui/src/views/Login.tsx": login_version(),
         "README.md": readme_version(),
     }
 
