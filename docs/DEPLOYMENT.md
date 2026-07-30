@@ -19,7 +19,7 @@ WeRSS 支持两种部署模式，按需选择：
 
 ```env
 WERSS_IMAGE=docker.io/franklin888/werss
-WERSS_IMAGE_TAG=1.1.6
+WERSS_IMAGE_TAG=1.1.7
 ```
 
 正式发布由 `.github/workflows/release-deploy.yaml` 处理。推送与源码版本一致的
