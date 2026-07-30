@@ -19,7 +19,9 @@
 本地示例仍可使用 SQLite。已有外部数据库、对象存储或反向代理时使用
 `docker-compose.app-only.yml`。持久化数据位于宿主机挂载目录，不写入应用镜像。
 完整栈固定使用兼容 Docker API `1.40` 的 `traefik:v3.6.17`，由 Docker provider
-读取 WeRSS 容器标签并建立公网路由。
+读取 WeRSS 容器标签并建立公网路由。公网响应经过 Traefik `compress`
+中间件压缩；React 登录页保持首屏加载，其余业务路由及图表、编辑器依赖按需加载，
+避免低带宽链路在展示登录页前下载完整后台资源。
 Playwright 浏览器作为镜像内容安装在 `/ms-playwright`；构建和运行时使用同一个
 `PLAYWRIGHT_BROWSERS_PATH`，浏览器安装失败会直接阻止发布缺少采集能力的镜像。
 

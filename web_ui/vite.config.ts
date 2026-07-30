@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
       outDir: "dist",
       emptyOutDir: true,
       assetsDir: "assets",
-      chunkSizeWarningLimit: 2000, // 调大警告阈值，因为我们合并了包
+      chunkSizeWarningLimit: 1000,
       
       // ⚠️ 关键修改 1: 降低构建目标版本
       // 'esnext' 有时会导致 class 这里的初始化顺序问题，es2020 更稳健
@@ -44,23 +44,13 @@ export default defineConfig(({ command, mode }) => {
           warn(warning);
         },
         output: {
-          // ⚠️ 关键修改 2: 优化分包策略，解决循环依赖
+          // 只固定隔离 Monaco 编辑器，其余模块交给 Rollup 根据
+          // 路由动态导入关系自动分包，避免把所有后台依赖塞进登录首屏。
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              // 1. 只把 Monaco Editor 拆出来 (它非常独立，拆分很安全)
               if (id.includes('monaco-editor') || id.includes('@monaco-editor')) {
                 return 'monaco';
               }
-
-              // 2. ⚠️ 重点：不再单独拆分 vchart
-              // 将 vchart, react, radix 等全部归入 vendor。
-              // 这会增加 vendor.js 的体积，但能确保所有依赖在同一个闭包内按正确顺序执行。
-              return 'vendor';
-            }
-            // 3. 将 API 模块单独拆分，避免循环依赖
-            // 这样可以确保动态导入和静态导入都能正常工作
-            if (id.includes('/src/api/')) {
-              return 'api';
             }
           },
           inlineDynamicImports: false,

@@ -1,33 +1,37 @@
 import { createBrowserRouter, Navigate, Link } from 'react-router-dom'
-import NotFound from '../views/NotFound'
-import BasicLayout from '../components/Layout/BasicLayout'
-import ExportRecords from '../views/ExportRecords'
+import { lazy } from 'react'
 import Login from '../views/Login'
-import ArticleListPage from '../views/ArticleListPage'
-import ChangePassword from '../views/ChangePassword'
-import EditUser from '../views/EditUser'
-import AddSubscription from '../views/AddSubscription'
-import WeChatMpManagement from '../views/WeChatMpManagement'
-import SubscriptionManagement from '../views/SubscriptionManagement'
-import ConfigList from '../views/ConfigList'
-import ConfigDetail from '../views/ConfigDetail'
-import MessageTaskList from '../views/MessageTaskList'
-import MessageTaskForm from '../views/MessageTaskForm'
-import FetchTaskList from '../views/FetchTaskList'
-import FetchTaskForm from '../views/FetchTaskForm'
-import NotifyTaskList from '../views/NotifyTaskList'
-import NotifyTaskForm from '../views/NotifyTaskForm'
-import SystemTaskList from '../views/SystemTaskList'
-import NovelReader from '../views/NovelReader'
-import SysInfo from '../views/SysInfo'
-import TagList from '../views/TagList'
-import TagForm from '../views/TagForm'
-import TagClusterList from '../views/TagClusterList'
-import TagClusterDetail from '../views/TagClusterDetail'
-import HotTopics from '../views/HotTopics'
-import Dashboard from '../views/Dashboard'
-import Settings from '../views/Settings'
-import ApiKeyManagement from '../views/ApiKeyManagement'
+
+// 登录页保持同步加载，确保未登录用户能尽快看到首屏；其余页面按路由加载，
+// 避免登录页被图表、编辑器及后台管理页面的依赖阻塞。
+const NotFound = lazy(() => import('../views/NotFound'))
+const BasicLayout = lazy(() => import('../components/Layout/BasicLayout'))
+const ExportRecords = lazy(() => import('../views/ExportRecords'))
+const ArticleListPage = lazy(() => import('../views/ArticleListPage'))
+const ChangePassword = lazy(() => import('../views/ChangePassword'))
+const EditUser = lazy(() => import('../views/EditUser'))
+const AddSubscription = lazy(() => import('../views/AddSubscription'))
+const WeChatMpManagement = lazy(() => import('../views/WeChatMpManagement'))
+const SubscriptionManagement = lazy(() => import('../views/SubscriptionManagement'))
+const ConfigList = lazy(() => import('../views/ConfigList'))
+const ConfigDetail = lazy(() => import('../views/ConfigDetail'))
+const MessageTaskList = lazy(() => import('../views/MessageTaskList'))
+const MessageTaskForm = lazy(() => import('../views/MessageTaskForm'))
+const FetchTaskList = lazy(() => import('../views/FetchTaskList'))
+const FetchTaskForm = lazy(() => import('../views/FetchTaskForm'))
+const NotifyTaskList = lazy(() => import('../views/NotifyTaskList'))
+const NotifyTaskForm = lazy(() => import('../views/NotifyTaskForm'))
+const SystemTaskList = lazy(() => import('../views/SystemTaskList'))
+const NovelReader = lazy(() => import('../views/NovelReader'))
+const SysInfo = lazy(() => import('../views/SysInfo'))
+const TagList = lazy(() => import('../views/TagList'))
+const TagForm = lazy(() => import('../views/TagForm'))
+const TagClusterList = lazy(() => import('../views/TagClusterList'))
+const TagClusterDetail = lazy(() => import('../views/TagClusterDetail'))
+const HotTopics = lazy(() => import('../views/HotTopics'))
+const Dashboard = lazy(() => import('../views/Dashboard'))
+const Settings = lazy(() => import('../views/Settings'))
+const ApiKeyManagement = lazy(() => import('../views/ApiKeyManagement'))
 // import { verifyToken } from '@/api/auth'
 
 // 路由守卫组件
