@@ -118,12 +118,12 @@ jobs:
 
       - name: Confirm the release image is publicly pullable
         env:
+          IMAGE_REPOSITORY: ${{ vars.DOCKERHUB_USERNAME }}/werss
           VERSION: ${{ needs.version.outputs.version }}
-        run: |
-          curl --fail --silent --show-error \
-            --retry 10 --retry-delay 3 --retry-all-errors \
-            "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/werss/tags/$VERSION" \
-            >/dev/null
+        run: >-
+          python scripts/check-docker-image-public.py
+          "$IMAGE_REPOSITORY" "$VERSION"
+          linux/amd64 linux/arm64
 
       - name: Record image result
         env:
