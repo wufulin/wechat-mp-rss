@@ -18,7 +18,7 @@
 完整栈由 `docker-compose.yml` 定义；GCP 生产 `.env` 将 `DB` 指向栈内 PostgreSQL，
 本地示例仍可使用 SQLite。已有外部数据库、对象存储或反向代理时使用
 `docker-compose.app-only.yml`。持久化数据位于宿主机挂载目录，不写入应用镜像。
-完整栈固定使用兼容 Docker API `1.40` 的 `traefik:v3.6.16`，由 Docker provider
+完整栈固定使用兼容 Docker API `1.40` 的 `traefik:v3.6.17`，由 Docker provider
 读取 WeRSS 容器标签并建立公网路由。
 Playwright 浏览器作为镜像内容安装在 `/ms-playwright`；构建和运行时使用同一个
 `PLAYWRIGHT_BROWSERS_PATH`，浏览器安装失败会直接阻止发布缺少采集能力的镜像。
